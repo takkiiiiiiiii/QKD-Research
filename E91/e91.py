@@ -11,7 +11,7 @@ import re
 from IPython.display import display
 
 
-# Implement BBM92
+# Implement E91
 
 count = 1000
 sifted_key_length = 1000
