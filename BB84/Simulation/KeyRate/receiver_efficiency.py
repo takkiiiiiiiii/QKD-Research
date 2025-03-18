@@ -27,22 +27,25 @@ def shape_lambda(xi, radius):
 #=======================================================#
 
 #=======================================================#
+varphi = math.pi/5
+x = r * 
+
 # Intensity of elliptic beam
-def intensity(w_1, w_2, phi, r, r0):
+def intensity(w_1, w_2, varphi, r, r0):
     #======================#
     # w_1: long axis of the elliptic
     # w_2: short axis of the elliptic
     # phi: angle of rotation of long axis w_1 with respect to the x-axis
-    # r: position vector
+    # r: vector of transverse coordinates
     # r0: beam centre position vector
     #======================#
 
     # beam_centroid position
     pow_w1 = pow(w_1, 2)
     pow_w2 = pow(w_2, 2)
-    s_xx = pow_w1 * pow(math.cos(phi), 2) + pow_w2 * pow(math.sin(phi), 2)
-    s_yy = pow_w1 * pow(math.sin(phi), 2) + pow_w2 * pow(math.cos(phi), 2)
-    s_xy = 1/2*(pow_w1 - pow_w2)*(2*math.sin(phi)*math.cos(phi))
+    s_xx = pow_w1 * pow(math.cos(varphi), 2) + pow_w2 * pow(math.sin(varphi), 2)
+    s_yy = pow_w1 * pow(math.sin(varphi), 2) + pow_w2 * pow(math.cos(varphi), 2)
+    s_xy = 1/2*(pow_w1 - pow_w2)*(2*math.sin(varphi)*math.cos(varphi))
     s = np.array([[s_xx, s_xy], [s_xy, s_yy]])
 
     # Compute the matrix S^-1
