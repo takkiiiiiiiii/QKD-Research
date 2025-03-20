@@ -28,7 +28,7 @@ def shape_lambda(xi, radius):
 
 #=======================================================#
 varphi = math.pi/5
-x = r * 
+
 
 # Intensity of elliptic beam
 def intensity(w_1, w_2, varphi, r, r0):
@@ -36,9 +36,13 @@ def intensity(w_1, w_2, varphi, r, r0):
     # w_1: long axis of the elliptic
     # w_2: short axis of the elliptic
     # phi: angle of rotation of long axis w_1 with respect to the x-axis
-    # r: vector of transverse coordinates
-    # r0: beam centre position vector
+    # r: Distance of elliptical beam centre from aperture centre
+    # r0:Distance of a point in the elliptical beam from the aperture centre
     #======================#
+
+    # 
+    vec_r = np.array([r*math.cos(varphi), r*math.sin(varphi)])  
+    vec_r_0 = np.array([r0*math.cos(varphi), r0*math.sin(varphi)])
 
     # beam_centroid position
     pow_w1 = pow(w_1, 2)
@@ -58,6 +62,7 @@ def intensity(w_1, w_2, varphi, r, r0):
     diff = r - r0
 
     # I(r, z)
+    I 
     exponent = -2 * np.dot(np.dot(diff.T, s_inv), diff)
     intensity = (2 / np.pi) * np.sqrt(det_s) * np.exp(exponent)
 
