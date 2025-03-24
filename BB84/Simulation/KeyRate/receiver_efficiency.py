@@ -62,9 +62,10 @@ def intensity(w_1, w_2, varphi, r, r0):
     diff = r - r0
 
     # I(r, z)
-    I 
+    # I_0: The intensity is the maximum value of the intensity at the centre of the beam (i.e. at position r=r0).
+    I_0 = (2 / np.pi) * np.sqrt(det_s) 
     exponent = -2 * np.dot(np.dot(diff.T, s_inv), diff)
-    intensity = (2 / np.pi) * np.sqrt(det_s) * np.exp(exponent)
+    intensity = I_0 * np.exp(exponent)
 
     return intensity
 
