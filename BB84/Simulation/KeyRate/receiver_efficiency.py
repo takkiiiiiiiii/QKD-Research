@@ -3,10 +3,35 @@ import math
 import numpy as np
 
 
+#=======================================================#
+# Channel loss parameter
+#=======================================================#
+    #=====================#
+    # a      : aperture of radius
+    # w_1    : long axis of the elliptic
+    # w_2    : short axis of the elliptic
+    # r0     : Distance of elliptical beam center from aperture center (開口中心から楕円ビームの中心の距離)
+    # r1     : Distance of a point in the elliptical beam from the aperture center (開口中心から楕円ビーム内のある点の距離)
+    # phi    : angle between the x-axis and the elliptic semi-axis related to w_1^2
+    # varphi0: angle in polar coordinates, representing the position of the center point in the beam profile.
+    # varphi1: angle in polar coordinates, representing the position of a point in the beam profile
+    #======================#
+
 a = 0.35
+w_1 = 0.2 * a
+w_2 = 0.1 * a
+r0 = 0.2
+r1 = 0.25
+phi = 3/math.pi
+varphi0 = 4/math.pi
+varphi1 = 5/math.pi
+#=======================================================#
+
+
 
 #=======================================================#
 # Transmissivity Eta
+#=======================================================#
 
 
 #=======================================================#
@@ -15,6 +40,7 @@ a = 0.35
 #=======================================================#
 # Scale function R
 # Shape function lambda
+#=======================================================#
 def scale_R(xi, radius):
     pow_a = pow(radius, 2)
     pow_xi = pow(xi, 2)
@@ -23,6 +49,7 @@ def scale_R(xi, radius):
 
 #=======================================================#
 # Shape function lambda λ(ξ)
+#=======================================================#
 def lambda_function(xi):
     a2_xi2 = (a**2) * (xi**2)
     
@@ -35,22 +62,14 @@ def lambda_function(xi):
     lambda_xi = (numerator / denominator) * (1 / log_term)
 
     return lambda_xi
-
-
-
-
 #=======================================================#
+
 
 
 #=======================================================#
 # Intensity of elliptic beam defined I_0 (r = r0)
-def intensity_0(w_1, w_2, phi):
-    #======================#
-    # w_1: long axis of the elliptic
-    # w_2: short axis of the elliptic
-    # phi: angle between the x-axis and the elliptic semi-axis related to w_1^2
-    #======================#
-
+#=======================================================#
+def intensity_0():
     # beam_centroid position
     pow_w1 = pow(w_1, 2)
     pow_w2 = pow(w_2, 2)
@@ -66,24 +85,15 @@ def intensity_0(w_1, w_2, phi):
     intensity = (2 / np.pi) * np.sqrt(det_s) 
 
     return intensity
-
 #=======================================================#
 
 
 #=======================================================#
 # Intensity of elliptic beam which defined I_1
-def intensity_1(w_1, w_2, phi, varphi1, varphi, r1, r):
-    #======================#
-    # w_1: long axis of the elliptic
-    # w_2: short axis of the elliptic
-    # phi: angle between the x-axis and the elliptic semi-axis related to w_1^2
-    # varphi: angle in polar coordinates, representing the position of a point in the beam profile
-    # r1: Distance of elliptical beam center from aperture center (開口中心から楕円ビームの中心の距離)
-    # r:Distance of a point in the elliptical beam from the aperture center (開口中心から楕円ビーム内のある点の距離)
-    #======================#
-
+#=======================================================#
+def intensity_1():
     vec_r1 = np.array([r1*math.cos(varphi1), r1*math.sin(varphi1)])  
-    vec_r = np.array([r*math.cos(varphi), r*math.sin(varphi)])
+    vec_r0 = np.array([r0*math.cos(varphi0), r0*math.sin(varphi0)])
 
     # beam_centroid position
     pow_w1 = pow(w_1, 2)
@@ -97,16 +107,15 @@ def intensity_1(w_1, w_2, phi, varphi1, varphi, r1, r):
     s_inv = np.linalg.inv(s)
 
     # difference vector
-    diff = vec_r - vec_r1
+    diff = vec_r0 - vec_r1
 
     # I(r, z)
     # I_0: The intensity is the maximum value of the intensity at the centre of the beam (i.e. at position r=r0).
-    i_0 = intensity_0(w_1, w_2, varphi)
+    i_0 = intensity_0(w_1, w_2, phi)
     exponent = -2 * np.dot(np.dot(diff.T, s_inv), diff)
     intensity = i_0 * np.exp(exponent)
 
     return intensity
-
 #=======================================================#
 
 
@@ -130,4 +139,4 @@ def W_eff(w_1, w_2, phi, varphi):
     w_eff = math.sqrt(pow(4*pow(a, 2) * lambert_val, -1))
 
     return w_eff
-
+#=======================================================#
