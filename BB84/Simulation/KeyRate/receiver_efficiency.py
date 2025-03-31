@@ -41,16 +41,26 @@ varphi1 = 5/math.pi
 # Scale function R
 # Shape function lambda
 #=======================================================#
-def scale_R(xi, radius):
-    pow_a = pow(radius, 2)
-    pow_xi = pow(xi, 2)
+def r_scale(xi):
+    a2_xi2 = (a**2) * (xi**2)
+
+    denominator = 1 - np.exp(-a2_xi2) * intensity_0()
+
+    log_term = np.log(2 * (1 - np.exp(-0.5 * a2_xi2)) / denominator)
+
+    # WIP:modify
+    lambda_pow = 1 / lambda_shape(xi)
+
+    scale_xi = 1 / (pow(log_term, lambda_pow))
+
+    return scale_xi
 #=======================================================#
 
 
 #=======================================================#
 # Shape function lambda λ(ξ)
 #=======================================================#
-def lambda_function(xi):
+def lambda_shape(xi):
     a2_xi2 = (a**2) * (xi**2)
     
     numerator = 2 * a2_xi2 * np.exp(-a2_xi2) * intensity_1()
@@ -59,9 +69,10 @@ def lambda_function(xi):
 
     log_term = np.log(2 * (1 - np.exp(-0.5 * a2_xi2)) / denominator)
 
-    lambda_xi = (numerator / denominator) * (1 / log_term)
 
-    return lambda_xi
+    shape_xi = (numerator / denominator) * (1 / log_term)
+
+    return shape_xi
 #=======================================================#
 
 
@@ -83,7 +94,6 @@ def intensity_0():
 
     # I(r, z)
     intensity = (2 / np.pi) * np.sqrt(det_s) 
-
     return intensity
 #=======================================================#
 
