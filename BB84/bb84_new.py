@@ -1,6 +1,7 @@
 # Upgrade qiskit version to 2.0.0
 from qiskit import QuantumCircuit
 from qiskit_aer import AerSimulator
+from qiskit_aer.noise import (NoiseModel, pauli_error)
 import time
 import random
 import socket
@@ -11,7 +12,7 @@ sifted_key_length = 1000
 num_qubits_linux = 16
 backend = AerSimulator()
 intercept_prob = 0
-noise_prob = 0
+noise_prob = 0.1
 kr_efficiency = 1.22
 
 
@@ -50,10 +51,10 @@ def generate_Siftedkey(user0, user1, num_qubits):
     ae_basis, ae_match = check_bases(alice_basis, eve_basis)
 
     # Apply the quantum error chanel
-    # noise_model = apply_noise_model(noise_prob)
+    noise_model = apply_noise_model(noise_prob)
 
     # Bob measures Alice's qubit
-    qc, bob_bits = bob_measurement(qc, bob_basis)
+    qc, bob_bits = bob_measurement(qc, bob_basis, noise_model)
     print(qc.draw())
 
     altered_qubits = 0
@@ -135,11 +136,11 @@ def compose_quantum_circuit_for_eve(num_qubit, alice_bits, alice_basis) -> Quant
     return qc2
 
 
-# def apply_noise_model(p_meas):
-#     error_meas = pauli_error([('X', p_meas), ('I', 1 - p_meas)])
-#     noise_model = NoiseModel()
-#     noise_model.add_all_qubit_quantum_error(error_meas, "measure")
-#     return noise_model
+def apply_noise_model(p_meas):
+    error_meas = pauli_error([('X', p_meas), ('I', 1 - p_meas)])
+    noise_model = NoiseModel()
+    noise_model.add_all_qubit_quantum_error(error_meas, "measure")
+    return noise_model
 
 
 # def bob_measurement(qc, bob_basis, noise_model):
@@ -157,7 +158,7 @@ def compose_quantum_circuit_for_eve(num_qubit, alice_bits, alice_basis) -> Quant
 #     return qc, bits
 
 
-def bob_measurement(qc, bob_basis):
+def bob_measurement(qc, bob_basis, noise_model):
     for i in range(len(bob_basis)):
         if bob_basis[i] == '1':  # Diagonal basis
             qc.h(i)
@@ -165,7 +166,8 @@ def bob_measurement(qc, bob_basis):
     qc.measure(range(len(bob_basis)), range(len(bob_basis)))
 
     # Qiskit 2.0.0 では execute() を使わず backend.run(qc) を直接使用
-    result = backend.run(qc, shots=1).result()
+    # result = backend.run(qc, shots=1).result()
+    result = backend.run(qc, shots=1, noise_model=noise_model).result()
     counts = result.get_counts()  # `.get_counts(0)` ではなく `.get_counts()` に変更
 
     # 取得した測定結果の中で最も出現回数が多いものを採用
