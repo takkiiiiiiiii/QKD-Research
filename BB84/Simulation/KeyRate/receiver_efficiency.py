@@ -1,4 +1,5 @@
-from scipy.special import lambertw
+from scipy.special import lambertw, i0, i1
+from scipy.special import *
 import math
 import numpy as np
 
@@ -30,8 +31,21 @@ varphi1 = 5/math.pi
 
 
 #=======================================================#
-# Transmissivity Eta
+# Transmissivity nb(eta_b)
 #=======================================================#
+def transmissivity():
+
+
+
+#=======================================================#
+
+
+#=======================================================#
+# Transmissivity n0(eta_0) : the transmittance for the
+# centered beam
+#=======================================================#
+def transmissivity_0():
+    eta
 
 
 #=======================================================#
@@ -44,7 +58,7 @@ varphi1 = 5/math.pi
 def r_scale(xi):
     a2_xi2 = (a**2) * (xi**2)
 
-    denominator = 1 - np.exp(-a2_xi2) * intensity_0()
+    denominator = 1 - np.exp(-a2_xi2) * i0(a2_xi2)
 
     log_term = np.log(2 * (1 - np.exp(-0.5 * a2_xi2)) / denominator)
 
@@ -63,9 +77,9 @@ def r_scale(xi):
 def lambda_shape(xi):
     a2_xi2 = (a**2) * (xi**2)
     
-    numerator = 2 * a2_xi2 * np.exp(-a2_xi2) * intensity_1()
+    numerator = 2 * a2_xi2 * np.exp(-a2_xi2) * i1(a2_xi2)
 
-    denominator = 1 - np.exp(-a2_xi2) * intensity_0()
+    denominator = 1 - np.exp(-a2_xi2) * i0(a2_xi2)
 
     log_term = np.log(2 * (1 - np.exp(-0.5 * a2_xi2)) / denominator)
 
