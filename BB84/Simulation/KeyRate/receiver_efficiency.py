@@ -45,8 +45,31 @@ def transmissivity():
 # centered beam
 #=======================================================#
 def transmissivity_0():
-    eta
+    
+def eta_0():
+    # 変数の定義
+    inv_W1_sq = 1 / w_1**2
+    inv_W2_sq = 1 / w_2**2
+    delta_W = 1 / w_1 - 1 / w_2  # (1/W1 - 1/W2)
+    
+    # Bessel function I_0
+    A = a**2 * (inv_W1_sq - inv_W2_sq) * np.exp(-a**2 * (inv_W1_sq + inv_W2_sq))
+    I0_term = iv(0, A)  # Bessel function I_0(A)
 
+    # Exponential term
+    exp_term1 = np.exp(-0.5 * a**2 * (inv_W1_sq - inv_W2_sq)**2)
+    
+    # Scaling function R and lambda
+    R_xi = r_scale(delta_W)  # `r_scale(xi)` を定義済みとする
+    lambda_xi = lambda_shape(delta_W)  # `lambda_shape(xi)` を定義済みとする
+    
+    # Second exponential term
+    exp_term2 = np.exp(-((w_1 + w_2)**2 / np.abs(w_1**2 - w_2**2) / R_xi) ** lambda_xi)
+
+    # Eta_0 の計算
+    eta_0_val = 1 - I0_term - 2 * (1 - exp_term1) * exp_term2
+
+    return eta_0_val
 
 #=======================================================#
 
