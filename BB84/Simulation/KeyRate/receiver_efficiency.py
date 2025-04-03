@@ -20,7 +20,7 @@ import numpy as np
 
 a = 0.35
 w_1 = 0.2 * a
-w_2 = 0.1 * a
+w_2 = 0.3 * a
 r0 = 0.2
 r1 = 0.25
 phi = 3/math.pi
@@ -34,7 +34,10 @@ varphi1 = 5/math.pi
 # Transmissivity nb(eta_b)
 #=======================================================#
 def transmissivity():
-
+    eta_0 = transmissivity_0()
+    exp_term = np.exp(-(r0/a/r_scale(2/W_eff(phi, varphi0)))**lambda_shape(2/W_eff(phi, varphi0)))
+    eta = eta_0 * exp_term
+    return eta
 
 
 #=======================================================#
@@ -45,16 +48,17 @@ def transmissivity():
 # centered beam
 #=======================================================#
 def transmissivity_0():
-    
-def eta_0():
     # 変数の定義
     inv_W1_sq = 1 / w_1**2
+    print(inv_W1_sq)
     inv_W2_sq = 1 / w_2**2
+    print(inv_W2_sq)
+    print(inv_W1_sq-inv_W2_sq)
     delta_W = 1 / w_1 - 1 / w_2  # (1/W1 - 1/W2)
     
     # Bessel function I_0
     A = a**2 * (inv_W1_sq - inv_W2_sq) * np.exp(-a**2 * (inv_W1_sq + inv_W2_sq))
-    I0_term = iv(0, A)  # Bessel function I_0(A)
+    I0_term = i0(A)  # scipy.special.i0(A) を使う
 
     # Exponential term
     exp_term1 = np.exp(-0.5 * a**2 * (inv_W1_sq - inv_W2_sq)**2)
@@ -64,7 +68,7 @@ def eta_0():
     lambda_xi = lambda_shape(delta_W)  # `lambda_shape(xi)` を定義済みとする
     
     # Second exponential term
-    exp_term2 = np.exp(-((w_1 + w_2)**2 / np.abs(w_1**2 - w_2**2) / R_xi) ** lambda_xi)
+    exp_term2 = np.exp(-((w_1 + w_2)**2 / np.abs(w_1**2 - w_2**2) / r_scale(inv_W1_sq-inv_W2_sq)) ** lambda_shape(inv_W1_sq-inv_W2_sq))
 
     # Eta_0 の計算
     eta_0_val = 1 - I0_term - 2 * (1 - exp_term1) * exp_term2
@@ -81,11 +85,19 @@ def eta_0():
 def r_scale(xi):
     a2_xi2 = (a**2) * (xi**2)
 
+    # デバッグ用の出力
+    print(f"DEBUG: a2_xi2 = {a2_xi2}, xi = {xi}")
+
+    # NaN や Inf をチェック
+    if np.isnan(a2_xi2) or np.isinf(a2_xi2):
+        raise ValueError(f"Error: a2_xi2 is invalid! a2_xi2 = {a2_xi2}, xi = {xi}")
+
     denominator = 1 - np.exp(-a2_xi2) * i0(a2_xi2)
 
     log_term = np.log(2 * (1 - np.exp(-0.5 * a2_xi2)) / denominator)
 
     # WIP:modify
+
     lambda_pow = 1 / lambda_shape(xi)
 
     scale_xi = 1 / (pow(log_term, lambda_pow))
@@ -100,12 +112,18 @@ def r_scale(xi):
 def lambda_shape(xi):
     a2_xi2 = (a**2) * (xi**2)
     
+    # デバッグ用の出力
+    print(f"DEBUG: a2_xi2 = {a2_xi2}, xi = {xi}")
+
+    # NaN や Inf をチェック
+    if np.isnan(a2_xi2) or np.isinf(a2_xi2):
+        raise ValueError(f"Error: a2_xi2 is invalid! a2_xi2 = {a2_xi2}, xi = {xi}")
+    
     numerator = 2 * a2_xi2 * np.exp(-a2_xi2) * i1(a2_xi2)
 
     denominator = 1 - np.exp(-a2_xi2) * i0(a2_xi2)
 
     log_term = np.log(2 * (1 - np.exp(-0.5 * a2_xi2)) / denominator)
-
 
     shape_xi = (numerator / denominator) * (1 / log_term)
 
@@ -169,21 +187,30 @@ def intensity_1():
 #=======================================================#
 # Slot radius W_err
 #=======================================================#
-def W_eff(w_1, w_2, phi, varphi):
+def W_eff(phi, varphi):
     chi = phi - varphi
-    exp_power = math.exp((pow(a, 2) / pow(w_1, 2)) * (1 + 2 * pow(math.cos(math.pi / 5), 2)))
+    exp_power = math.exp((pow(a, 2) / pow(w_1, 2)) * (1 + 2 * pow(math.cos(chi), 2)))
     
-    ## beam_efficiency_factor
-    beam_efficiency_factor = 4*pow(a, 2) / (w_1 * w_2)
+    # beam_efficiency_factor の計算
+    beam_efficiency_factor = 4 * pow(a, 2) / (w_1 * w_2)
 
-    ## argument for lambert w function
-    lambert_arg = pow(beam_efficiency_factor, exp_power) * exp_power
+    # lambert w 関数の引数
+    lambert_arg = beam_efficiency_factor * exp_power * exp_power  # 修正: スカラー値にする
 
-    ## lambert w function
-    lambert_val = lambertw(lambert_arg)
+    # lambert w の計算
+    lambert_val = lambertw(lambert_arg).real  # 実数部分のみ取得
 
-    ## slot radius W_eff
-    w_eff = math.sqrt(pow(4*pow(a, 2) * lambert_val, -1))
+    # slot radius W_eff
+    w_eff = math.sqrt(1 / (4 * pow(a, 2) * lambert_val))  # 修正: pow の位置
 
+    print(f'Efficiency: {w_eff}')
     return w_eff
 #=======================================================#
+
+def main():
+    eta_b = transmissivity()
+    print(f'Transmissivity: {eta_b}')
+
+
+if __name__ == '__main__':
+    main()
