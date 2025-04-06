@@ -7,33 +7,28 @@ import numpy as np
 # Channel loss parameter
 #=======================================================#
     #=====================#
-    # a      : aperture of radius
-    # w_1    : long axis of the elliptic
-    # w_2    : short axis of the elliptic
+    # D_r    : Deceiver diameter in meters
+    # a      : Aperture of radius (Receiver radis in meters)
+    # w_1    : Long axis of the elliptic
+    # w_2    : Short axis of the elliptic
     # r0     : Distance of elliptical beam center from aperture center (開口中心から楕円ビームの中心の距離)
     # r1     : Distance of a point in the elliptical beam from the aperture center (開口中心から楕円ビーム内のある点の距離)
-    # phi    : angle between the x-axis and the elliptic semi-axis related to w_1^2
-    # varphi0: angle in polar coordinates, representing the position of the center point in the beam profile.
-    # varphi1: angle in polar coordinates, representing the position of a point in the beam profile
+    # phi    : Angle between the x-axis and the elliptic semi-axis related to w_1^2
+    # varphi0: Angle in polar coordinates, representing the position of the center point in the beam profile.
+    # chi    : phi - varphi0
+    # varphi1: Angle in polar coordinates, representing the position of a point in the beam profile
     #======================#
-
-a = 1.0
-w_1 = a
-w_2 = 0.9*a
-r0 = 1.5
-r1 = 0.25
-phi = math.pi/3
-varphi0 = math.pi/12
-varphi1 = math.pi/5
+D_r = 0.35
+a = D_r / 2
 #=======================================================#
 
 
 #=======================================================#
 # Transmissivity nb(eta_b)
 #=======================================================#
-def transmissivity():
-    eta_0 = transmissivity_0()
-    exp_term = np.exp(-(r0/a/r_scale(2/W_eff(phi, varphi0)))**lambda_shape(2/W_eff(phi, varphi0)))
+def transmissivity(beam_centroid_displacement, chi, w_1, w_2):
+    eta_0 = transmissivity_0(w_1, w_2)
+    exp_term = np.exp(-(beam_centroid_displacement/r_scale(2/W_eff(chi, w_1, w_2)))**lambda_shape(2/W_eff(chi, w_1, w_2)))
     eta = eta_0 * exp_term
     return eta
 #=======================================================#
@@ -43,7 +38,7 @@ def transmissivity():
 # Transmissivity n0(eta_0) : the transmittance for the
 # centered beam
 #=======================================================#
-def transmissivity_0():
+def transmissivity_0(w_1, w_2):
     # 変数の定義
     inv_W1_sq = 1 / w_1**2
     # print(inv_W1_sq)
@@ -132,8 +127,7 @@ def lambda_shape(xi):
 #=======================================================#
 # Slot radius W_err
 #=======================================================#
-def W_eff(phi, varphi):
-    chi = phi - varphi
+def W_eff(chi, w_1, w_2):
     exp_power_cos = math.exp((pow(a, 2) / pow(w_1, 2)) * (1 + 2 * pow(math.cos(chi), 2)))
     exp_power_sin = math.exp((pow(a, 2) / pow(w_2, 2)) * (1 + 2 * pow(math.sin(chi), 2)))
     
@@ -160,8 +154,29 @@ def to_decimal_string(x, precision=70):
 
 
 def main():
-    eta_b = transmissivity()
-    print(f'Transmissivity: {to_decimal_string(eta_b)}')
+    # =======Definition of parameter =========== #
+    ratios = [0, 0.5, 1.0, 1.5, 2.0, 2.5, 3.0]
+    r0 = [r * a for r in ratios]
+    mag_w1 = [0.2, 1.0, 1.8]
+    mag_w2 = [0.1, 0.9, 1.7]
+    chi = [math.pi/3, math.pi/4, math.pi/5]
+    chi_show = [3, 4, 5]
+    print("===============================")
+    print(f'Aperture of radius (Receiver radis in meters): {a} m')
+    for i, w_1 in enumerate(mag_w1):
+        print(f'Long axis: {mag_w1[i]} * {a}')
+        print(f'Long axis: {mag_w2[i]} * {a}')
+        print(f'Chi: π / {chi_show[i]}')
+    # print(f'Long axis of the elliptic: {w_1*a}')
+    # print(f'Long axis of the elliptic: {w_2*a}')
+        beam_centroid_displacement = [r / a for r in r0]
+        eta_b = [transmissivity(b, chi[i], mag_w1[i]*a, mag_w2[i]*a) for b in beam_centroid_displacement]
+        print("Transmissivity values:")
+        for j, eta in enumerate(eta_b):
+            print(f"  r0/a = {ratios[j]} → <ηb> = {to_decimal_string(eta)}")
+        print("===============================\n")
+    
+    print("Simulation Finish !!")
 
 
 if __name__ == '__main__':
