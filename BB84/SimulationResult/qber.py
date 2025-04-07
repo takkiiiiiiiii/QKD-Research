@@ -3,22 +3,28 @@ from qiskit import QuantumCircuit
 from qiskit_aer import AerSimulator
 from qiskit_aer.noise import (NoiseModel, pauli_error)
 import math
+import numpy as np
 import socket
 import os, sys
+import matplotlib.pyplot as plt
 simulation_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'Model'))
 sys.path.append(simulation_path)
-from receiver_efficiency import simulation_eta_b, transmissivity, to_decimal_string
+from receiver_efficiency import transmissivity, to_decimal_string
 
 
-count = 1000
-sifted_key_length = 1000
-num_qubits_linux = 16
 backend = AerSimulator()
-intercept_prob = 0
-noise_prob = 0.1
-kr_efficiency = 1.22
+
+#===============Deefinition of parameter===============#
+count = 50
+no_qubits = 20
 D_r = 0.35 # D_r    : Deceiver diameter in meters
 a = D_r/2  # a      : Aperture of radius (Receiver radis in meters)
+ratios = np.arange(0, 3.1, 0.1)
+r0 = [r * a for r in ratios]
+mag_w1 = [0.2, 1.0, 1.8]
+mag_w2 = [0.1, 0.9, 1.7]
+chi = [math.pi/3, math.pi/4, math.pi/5]
+chi_show = [3, 4, 5]
 
 
 class User:
@@ -59,7 +65,6 @@ def generate_Siftedkey(user0, user1, num_qubits, eta_b):
 
     # Bob measures Alice's qubit
     qc, bob_bits = bob_measurement(qc, bob_basis, noise_model)
-    print(qc.draw())
 
     altered_qubits = 0
 
@@ -190,40 +195,82 @@ def check_bits(b1, b2, bck):
             check += '-'
     return check
 
+
 # Transmissity
 def simulation_eta_b():
     # =======Definition of parameter =========== #
-    ratios = [0, 0.5, 1.0, 1.5, 2.0, 2.5, 3.0]
-    r0 = [r * a for r in ratios]
-    mag_w1 = [0.2, 1.0, 1.8]
-    mag_w2 = [0.1, 0.9, 1.7]
-    chi = [math.pi/3, math.pi/4, math.pi/5]
-    chi_show = [3, 4, 5]
+    all_eta_b = []
+
     print("===============================")
     print(f'Aperture of radius (Receiver radis in meters): {a} m')
+
     for i, w_1 in enumerate(mag_w1):
         print(f'Long axis: {mag_w1[i]} * {a}')
         print(f'Long axis: {mag_w2[i]} * {a}')
         print(f'Chi: π / {chi_show[i]}')
-    # print(f'Long axis of the elliptic: {w_1*a}')
-    # print(f'Long axis of the elliptic: {w_2*a}')
+
         beam_centroid_displacement = [r / a for r in r0]
-        eta_b = [transmissivity(b, chi[i], mag_w1[i]*a, mag_w2[i]*a) for b in beam_centroid_displacement]
-        print("Transmissivity values:")
-        for j, eta in enumerate(eta_b):
-            print(f"  r0/a = {ratios[j]} → <ηb> = {to_decimal_string(eta)}")
+        eta_b = [transmissivity(b, chi[i], mag_w1[i] * a, mag_w2[i] * a) for b in beam_centroid_displacement]
+        
+        # print("Transmissivity values:")
+        # for j, eta in enumerate(eta_b):
+        #     print(f"  r0/a = {ratios[j]} → <ηb> = {to_decimal_string(eta)}")
+        
+        all_eta_b.append(eta_b)  # 各`eta_b`リストを追加
+    
         print("===============================\n")
     
     print("Simulation Finish !!")
-    return
+    return all_eta_b  # 全てのeta_bリストを返す
+
+
+# Calculate the bit error rate
+def calculate_ber(ka, kb):
+    # キーの長さが一致していることを確認
+    if len(ka) != len(kb):
+        raise ValueError("Keys must be of the same length")
+
+    # エラー数のカウント
+    error_count = sum(1 for bit_a, bit_b in zip(ka, kb) if bit_a != bit_b)
+
+    # BERの計算
+    ber = (error_count / len(ka)) * 100
+    return ber
 
 
 def main():
-    print(f"Channel Noise Ratio:             {noise_prob*100}%")
-    print(f"Intercept-and-resend Ratio:      {intercept_prob*100}%")
-    part_ka, part_kb, execution_time = generate_Siftedkey(user0, user1, 10, eta_b)
-    print(f'Sifted key: {part_ka} and {part_kb}')
-    print(f'Runtime: {execution_time}')
+    ka = ''
+    kb = ''
+    all_ber_results = []
+    all_eta_b = simulation_eta_b()
+    for i, (mag_w1_value, mag_w2_value, chi_value) in enumerate(zip(mag_w1, mag_w2, chi)):
+        ber_results = []
+        for j, ratio in enumerate(ratios):
+            eta_b = all_eta_b[i][j]
+            for _ in range(count):
+                part_ka, part_kb = generate_Siftedkey(user0, user1, no_qubits, eta_b)
+                ka += part_ka
+                kb += part_kb
+            ber = calculate_ber(ka, kb)
+            ber_results.append(ber)
+        all_ber_results.append(ber_results)
+
+    plt.figure(figsize=(10, 6))
+    for i, ber_results in enumerate(all_ber_results):
+        # plt.plot(ratios, ber_results, marker='o', label=f'Condition {i+1}')
+        plt.plot(ratios, ber_results, marker='o', label=f'χ = π/{chi_show[i]}')
+
+    # グラフの描画
+    # plt.figure()
+    plt.xlabel('r0/a')
+    plt.ylabel('BER (%)')
+    plt.title(f'BER vs r0/a')
+    plt.legend()
+    plt.grid(True)
+    output_path = os.path.join(os.path.dirname(__file__), "qber_plot.png")
+    plt.savefig(output_path)
+    print(f"✅ Save as: {output_path}")
+    plt.show()
 
 
 if __name__ == '__main__':

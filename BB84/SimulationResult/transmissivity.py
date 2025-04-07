@@ -51,7 +51,7 @@ def main():
     # 画像ファイルとして保存
     output_path = os.path.join(os.path.dirname(__file__), "transmissivity_plot.png")
     plt.savefig(output_path)
-    print(f"✅ Save: {output_path}")
+    print(f"✅ Save as: {output_path}")
 
     plt.show()
     print("Simulation Finish !!")
