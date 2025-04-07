@@ -15,7 +15,7 @@ from receiver_efficiency import transmissivity, to_decimal_string
 backend = AerSimulator()
 
 #===============Deefinition of parameter===============#
-count = 50
+count = 1000
 no_qubits = 20
 D_r = 0.35 # D_r    : Deceiver diameter in meters
 a = D_r/2  # a      : Aperture of radius (Receiver radis in meters)
@@ -143,8 +143,8 @@ def compose_quantum_circuit_for_eve(num_qubit, alice_bits, alice_basis) -> Quant
     return qc2
 
 
-def apply_noise_model(p_meas):
-    error_meas = pauli_error([('X', p_meas), ('I', 1 - p_meas)])
+def apply_noise_model(eta_b):
+    error_meas = pauli_error([('X', 1-eta_b), ('I', eta_b)])
     noise_model = NoiseModel()
     noise_model.add_all_qubit_quantum_error(error_meas, "measure")
     return noise_model
@@ -239,14 +239,14 @@ def calculate_ber(ka, kb):
 
 
 def main():
-    ka = ''
-    kb = ''
     all_ber_results = []
     all_eta_b = simulation_eta_b()
     for i, (mag_w1_value, mag_w2_value, chi_value) in enumerate(zip(mag_w1, mag_w2, chi)):
         ber_results = []
         for j, ratio in enumerate(ratios):
             eta_b = all_eta_b[i][j]
+            ka = ''
+            kb = ''
             for _ in range(count):
                 part_ka, part_kb = generate_Siftedkey(user0, user1, no_qubits, eta_b)
                 ka += part_ka
