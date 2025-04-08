@@ -33,9 +33,9 @@ n_N = n_B/2 + n_D
 
 
 def qber(gamma):
-    prob_error = eta * n_N * math.exp(-eta(n_s*gamma+4*n_N))
+    # prob_error = eta * n_N * math.exp(-eta(n_s*gamma+4*n_N))
+    prob_error = eta * n_N * math.exp(-eta * (n_s * gamma + 4 * n_N))
     return prob_error
-    
 
 
 def simulation_gamma():
@@ -65,10 +65,12 @@ def simulation_gamma():
     return all_gamma  # 全てのeta_bリストを返す
 
 def main():
-    all_ber_results = []
     all_gamma = simulation_gamma()
     for i, (mag_w1_value, mag_w2_value, chi_value) in enumerate(zip(mag_w1, mag_w2, chi)):
-        ber_results = []
         for j, ratio in enumerate(ratios):
             gamma = all_gamma[i][j]
             prob_error = qber(gamma)
+
+
+if __name__ == "__main__":
+    main()
