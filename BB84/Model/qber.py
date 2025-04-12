@@ -1,7 +1,7 @@
 from scipy.special import lambertw, i0, i1
 import math
 import numpy as np
-from receiver_efficiency import transmissivity, to_decimal_string
+from beam_transmissivity import transmissivity, to_decimal_string
 
 
 D_r = 0.35 # D_r    : Deceiver diameter in meters
