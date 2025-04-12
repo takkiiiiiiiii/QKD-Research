@@ -4,7 +4,7 @@ import os, sys
 import numpy as np
 simulation_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'Model'))
 sys.path.append(simulation_path)
-from receiver_efficiency import transmissivity, to_decimal_string
+from beam_transmissivity import transmissivity, to_decimal_string
 
 
 D_r = 0.35
