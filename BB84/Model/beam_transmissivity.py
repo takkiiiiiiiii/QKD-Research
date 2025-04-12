@@ -2,9 +2,10 @@ from scipy.special import lambertw, i0, i1
 import math
 import numpy as np
 
+# The beam transmissivity(defined as eta_b) consider beam spreading loss and pointing error. 
 
 #=======================================================#
-# Channel loss parameter
+# beam transmissivity(eta_b) parameter
 #=======================================================#
     #=====================#
     # D_r    : Deceiver diameter in meters
