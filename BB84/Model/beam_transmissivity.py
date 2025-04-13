@@ -27,7 +27,7 @@ a = D_r / 2
 #=======================================================#
 # Transmissivity nb(eta_b)
 #=======================================================#
-def transmissivity(beam_centroid_displacement, chi, w_1, w_2):
+def transmissivity_etab(beam_centroid_displacement, chi, w_1, w_2):
     eta_0 = transmissivity_0(w_1, w_2)
     exp_term = np.exp(-(beam_centroid_displacement/r_scale(2/W_eff(chi, w_1, w_2)))**lambda_shape(2/W_eff(chi, w_1, w_2)))
     eta = eta_0 * exp_term
@@ -171,7 +171,7 @@ def simulation_eta_b():
     # print(f'Long axis of the elliptic: {w_1*a}')
     # print(f'Long axis of the elliptic: {w_2*a}')
         beam_centroid_displacement = [r / a for r in r0]
-        eta_b = [transmissivity(b, chi[i], mag_w1[i]*a, mag_w2[i]*a) for b in beam_centroid_displacement]
+        eta_b = [transmissivity_etab(b, chi[i], mag_w1[i]*a, mag_w2[i]*a) for b in beam_centroid_displacement]
         print("Transmissivity values:")
         for j, eta in enumerate(eta_b):
             print(f"  r0/a = {ratios[j]} → <ηb> = {to_decimal_string(eta)}")
