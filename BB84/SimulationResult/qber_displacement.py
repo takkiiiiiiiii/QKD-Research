@@ -5,7 +5,8 @@ import matplotlib.pyplot as plt
 import os, sys
 simulation_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'Model'))
 sys.path.append(simulation_path)
-from receiver_efficiency import transmissivity, to_decimal_string
+from beam_transmissivity import transmissivity_etab, to_decimal_string
+
 
 D_r = 0.35 # D_r    : Deceiver diameter in meters
 a = D_r/2  # a      : Aperture of radius (Receiver radis in meters)
@@ -54,7 +55,7 @@ def simulation_gamma():
         print(f'Chi: π / {chi_show[i]}')
 
         beam_centroid_displacement = [r / a for r in r0]
-        gamma = [transmissivity(b, chi[i], mag_w1[i] * a, mag_w2[i] * a) for b in beam_centroid_displacement]
+        gamma = [transmissivity_etab(b, chi[i], mag_w1[i] * a, mag_w2[i] * a) for b in beam_centroid_displacement]
         
         print("Transmissivity values:")
         for j, eta in enumerate(gamma):
