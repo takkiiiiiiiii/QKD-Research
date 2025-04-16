@@ -94,7 +94,7 @@ def main():
     plt.figure(figsize=(10, 6))
     for i, prob_error in enumerate(all_prob_error):
         # plt.plot(ratios, ber_results, marker='o', label=f'Condition {i+1}')
-        plt.plot(distances, prob_error, marker='o', label=f'{W_show[i]}a')
+        plt.plot(distances, prob_error, marker='o', label=f'w={W_show[i]}a')
 
     # グラフの描画
     # plt.figure()
