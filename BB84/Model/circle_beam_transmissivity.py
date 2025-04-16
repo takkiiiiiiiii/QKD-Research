@@ -107,6 +107,13 @@ def to_decimal_string(x, precision=70):
     return format(x, f'.{precision}f').rstrip('0').rstrip('.')
 
 
+#=======================================================#
+# Beam waist function
+#=======================================================#
+def beam_waist():
+    
+
+
 def simulation_eta_b():
     # =======Definition of parameter =========== #
     a = D_r/2
