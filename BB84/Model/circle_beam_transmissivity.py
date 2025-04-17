@@ -112,9 +112,11 @@ def to_decimal_string(x, precision=70):
 #=======================================================#
 # Beam waist function
 #=======================================================#
-# def beam_waist():
-    # waist = 
-
+def beam_waist(h_s, t):
+    r_t = satellite_ground_distance(h_s, t)
+    theta_d = 10 # divergence angle
+    waist = r_t * theta_d
+    return waist
 
 #=======================================================#
 # The distance between satellite and ground station
