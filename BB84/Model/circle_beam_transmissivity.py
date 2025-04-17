@@ -111,7 +111,7 @@ def to_decimal_string(x, precision=70):
 # Beam waist function
 #=======================================================#
 def beam_waist():
-    
+    waist = 
 
 
 def simulation_eta_b():
