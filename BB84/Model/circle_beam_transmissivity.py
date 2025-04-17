@@ -2,6 +2,8 @@ from scipy.special import lambertw, i0, i1
 import math
 import numpy as np
 
+# These functions of the beam waist on the ground, W = Rθd > 4 m for satellites above 400 km.
+
 # The beam transmissivity(defined as eta_b) consider beam spreading loss and pointing error. 
 
 #=======================================================#
@@ -11,7 +13,7 @@ import numpy as np
     # D_r    : Deceiver diameter in meters
     # a      : Aperture of radius (Receiver radis in meters)
     #======================#
-D_r = 0.35
+D_r = 1.5 #(a = 0.75m)
 #=======================================================#
 
 
@@ -110,8 +112,28 @@ def to_decimal_string(x, precision=70):
 #=======================================================#
 # Beam waist function
 #=======================================================#
-def beam_waist():
-    waist = 
+# def beam_waist():
+    # waist = 
+
+
+#=======================================================#
+# The distance between satellite and ground station
+# h_s : Satellite's altitude
+# t: time
+#=======================================================#
+def satellite_ground_distance(h_s, t): 
+    # Constant
+    G = 6.67430e-11         # Gravitational constant
+    M_T = 5.972e24          # Earth's mass
+    D_E = 6,378             # Earth's radius (km)
+    
+    d_o = D_E + h_s # orbital radius
+    omega = math.sqrt(G * M_T / d_o**3)
+    d_t = math.sqrt(D_E**2 + d_o**2 - 2 * D_E * d_o * math.cos(omega * t))
+
+    return d_t
+    
+
 
 
 def simulation_eta_b():
