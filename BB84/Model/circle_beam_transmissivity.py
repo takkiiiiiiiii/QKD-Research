@@ -132,7 +132,6 @@ def satellite_ground_distance(h_s, t):
     d_o = D_E + h_s # orbital radius
     omega = math.sqrt(G * M_T / d_o**3)
     d_t = math.sqrt(D_E**2 + d_o**2 - 2 * D_E * d_o * math.cos(omega * t))
-
     return d_t
 
 def simulation_eta_b(h_s):
@@ -143,7 +142,7 @@ def simulation_eta_b(h_s):
     d_o = D_E + h_s
     omega = math.sqrt(G * M_T / d_o**3)
     T = 2 * math.pi / omega
-    t = T * 0.25  # 周回の1/4周（90°移動）
+    t = T * 0.2  # 周回の1/4周（90°移動）
     #====================================#
     displacement = [0, 0.5, 1.0, 1.5, 2.0, 2.5, 3.0]
     r = [a*d for d in displacement]
@@ -152,11 +151,14 @@ def simulation_eta_b(h_s):
     W = [0.2*a, 1.0*a, 1.8*a]
     print("===============================")
     print(f'Aperture of radius (Receiver radis in meters): {a} m')
-    for i in range(len(W)):
-            print(f"--- W[{i}] = {W[i]} ---")
-            for displacement in r:
-                eta_b = transmissivity_etab(a, displacement, W[i])
-                print(f"r = {displacement}, eta_b = {eta_b}")
+    # for i in range(len(W)):
+    #         print(f"--- W[{i}] = {W[i]} ---")
+    #         for displacement in r:
+    #             eta_b = transmissivity_etab(a, displacement, W[i])
+    #             print(f"r = {displacement}, eta_b = {eta_b}")
+    for displacement in r:
+        eta_b = transmissivity_etab(a, displacement, waist)
+        print(f"r = {displacement}, eta_b = {eta_b}")
     print("===============================\n")
     
     
