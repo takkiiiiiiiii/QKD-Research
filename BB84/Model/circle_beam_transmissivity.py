@@ -13,7 +13,12 @@ import numpy as np
     # D_r    : Deceiver diameter in meters
     # a      : Aperture of radius (Receiver radis in meters)
     #======================#
-D_r = 1.5 #(a = 0.75m)
+# D_r = 1.5 #(a = 0.75m)
+a = 0.75
+# Constant
+G = 6.67430e-11         # Gravitational constant
+M_T = 5.972e24          # Earth's mass
+D_E = 6378e3             # Earth's radius (km)
 #=======================================================#
 
 
@@ -114,7 +119,7 @@ def to_decimal_string(x, precision=70):
 #=======================================================#
 def beam_waist(h_s, t):
     r_t = satellite_ground_distance(h_s, t)
-    theta_d = 10 # divergence angle
+    theta_d = 10e-6  # divergence angle(mrad)
     waist = r_t * theta_d
     return waist
 
@@ -124,25 +129,26 @@ def beam_waist(h_s, t):
 # t: time
 #=======================================================#
 def satellite_ground_distance(h_s, t): 
-    # Constant
-    G = 6.67430e-11         # Gravitational constant
-    M_T = 5.972e24          # Earth's mass
-    D_E = 6,378             # Earth's radius (km)
-    
     d_o = D_E + h_s # orbital radius
     omega = math.sqrt(G * M_T / d_o**3)
     d_t = math.sqrt(D_E**2 + d_o**2 - 2 * D_E * d_o * math.cos(omega * t))
 
     return d_t
-    
 
-
-
-def simulation_eta_b():
+def simulation_eta_b(h_s):
     # =======Definition of parameter =========== #
-    a = D_r/2
+    # h_s = 500e3 # (km)
+    #====================================#
+    # Need to be modify
+    d_o = D_E + h_s
+    omega = math.sqrt(G * M_T / d_o**3)
+    T = 2 * math.pi / omega
+    t = T * 0.25  # 周回の1/4周（90°移動）
+    #====================================#
     displacement = [0, 0.5, 1.0, 1.5, 2.0, 2.5, 3.0]
     r = [a*d for d in displacement]
+    waist = beam_waist(h_s, t)
+    print(f'Beam waist: {waist}')
     W = [0.2*a, 1.0*a, 1.8*a]
     print("===============================")
     print(f'Aperture of radius (Receiver radis in meters): {a} m')
@@ -158,7 +164,8 @@ def simulation_eta_b():
 
 
 def main():
-    simulation_eta_b()
+    h_s = 500e3
+    simulation_eta_b(h_s)
 
 if __name__ == '__main__':
     main()
