@@ -1,7 +1,7 @@
 from scipy.special import lambertw, i0, i1
 import math
 import numpy as np
-from Model.eliptic_beam_transmissivity import transmissivity, to_decimal_string
+# from Model.eliptic_beam_transmissivity import transmissivity, to_decimal_string
 
 
 D_r = 0.35 # D_r    : Deceiver diameter in meters
@@ -37,39 +37,11 @@ def qber(gamma):
     prob_error = eta * n_N * math.exp(-eta * (n_s * gamma + 4 * n_N))
     return prob_error
 
-
-def simulation_gamma():
-    # =======Definition of parameter =========== #
-    all_gamma = []
-
-    print("===============================")
-    print(f'Aperture of radius (Receiver radis in meters): {a} m')
-
-    for i, w_1 in enumerate(mag_w1):
-        print(f'Long axis: {mag_w1[i]} * {a}')
-        print(f'Long axis: {mag_w2[i]} * {a}')
-        print(f'Chi: π / {chi_show[i]}')
-
-        beam_centroid_displacement = [r / a for r in r0]
-        gamma = [transmissivity(b, chi[i], mag_w1[i] * a, mag_w2[i] * a) for b in beam_centroid_displacement]
-        
-        print("Transmissivity values:")
-        for j, eta in enumerate(gamma):
-            print(f"  r0/a = {ratios[j]} → <ηb> = {to_decimal_string(eta)}")
-        
-        all_gamma.append(gamma)  # 各`eta_b`リストを追加
-    
-        print("===============================\n")
-    
-    print("Simulation Finish !!")
-    return all_gamma  # 全てのeta_bリストを返す
-
 def main():
-    all_gamma = simulation_gamma()
-    for i, (mag_w1_value, mag_w2_value, chi_value) in enumerate(zip(mag_w1, mag_w2, chi)):
-        for j, ratio in enumerate(ratios):
-            gamma = all_gamma[i][j]
-            prob_error = qber(gamma)
+    gamma = 7.036783486945138e-26
+    # gamma = 6.068056215528627e-26
+    prob_error = qber(gamma)
+    print(prob_error)
 
 
 if __name__ == "__main__":
