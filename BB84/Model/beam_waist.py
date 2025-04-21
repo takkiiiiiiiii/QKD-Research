@@ -36,7 +36,6 @@ def satellite_ground_distance(h_s, t):
     omega = math.sqrt(G * M_T / d_o**3)
     d_t = math.sqrt(D_E**2 + d_o**2 - 2 * D_E * d_o * math.cos(omega * t))
     return d_t
-x
 
 def main():
     # =======Definition of parameter =========== #
