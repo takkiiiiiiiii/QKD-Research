@@ -41,13 +41,10 @@ def transmissivity_etab(a, r, W):
 #=======================================================#
 def transmissivity_0(a, W):
     ratio = a / W
-
     eta_0 = 1 - np.exp(-2 * ratio**2)
 
     return eta_0
 #=======================================================#
-
-
 
 
 #=======================================================#
@@ -118,9 +115,9 @@ def to_decimal_string(x, precision=70):
 # Beam waist function
 #=======================================================#
 def beam_waist(h_s, t):
-    r_t = satellite_ground_distance(h_s, t)
+    R_t = satellite_ground_distance(h_s, t)
     theta_d = 10e-6  # divergence angle(mrad)
-    waist = r_t * theta_d
+    waist = R_t * theta_d
     return waist
 
 #=======================================================#
@@ -131,8 +128,8 @@ def beam_waist(h_s, t):
 def satellite_ground_distance(h_s, t): 
     d_o = D_E + h_s # orbital radius
     omega = math.sqrt(G * M_T / d_o**3)
-    d_t = math.sqrt(D_E**2 + d_o**2 - 2 * D_E * d_o * math.cos(omega * t))
-    return d_t
+    R_t = math.sqrt(D_E**2 + d_o**2 - 2 * D_E * d_o * math.cos(omega * t))
+    return R_t
 
 def simulation_eta_b(h_s):
     # =======Definition of parameter =========== #
