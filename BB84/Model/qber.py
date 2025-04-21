@@ -20,7 +20,7 @@ chi_show = [3, 4, 5]
     #=====================#
     # n_s   : average numher of photon
     # n_D   : dark-current-equivalent averrage photon number
-    # eta   : 
+    # eta   : APD (single-photon avalanche photodiode) detection efficiency
     # n_B   : background photons per polarization
     # n_N   : the average number of noise photon reaching each detector
     # gamma : the fraction of transmmited photon
@@ -32,15 +32,15 @@ n_B = math.pow(10, -3)
 n_N = n_B/2 + n_D
 
 
-def qber(gamma):
+def qber_loss(gamma):
     # prob_error = eta * n_N * math.exp(-eta(n_s*gamma+4*n_N))
     prob_error = eta * n_N * math.exp(-eta * (n_s * gamma + 4 * n_N))
     return prob_error
 
 def main():
-    gamma = 7.036783486945138e-26
+    gamma = 4.00423e-02
     # gamma = 6.068056215528627e-26
-    prob_error = qber(gamma)
+    prob_error = qber_loss(gamma)
     print(prob_error)
 
 
