@@ -3,7 +3,7 @@ import math
 import numpy as np
 import matplotlib.pyplot as plt
 import os, sys
-simulation_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../', 'Model'))
+simulation_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../../', 'Model'))
 sys.path.append(simulation_path)
 from circle_beam_transmissivity import transmissivity_etab, satellite_ground_distance, beam_waist
 from atmospheric_transmissivity import atmospheric_transmittance
