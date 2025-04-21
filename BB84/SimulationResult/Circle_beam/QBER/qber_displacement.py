@@ -54,7 +54,7 @@ t = T * 0.0             # Time in orbit of the satellite (the time elapsed when 
     # n_N   : the average number of noise photon reaching each detector
     # gamma : the fraction of transmmited photon
     #======================#
-n_s = 20
+n_s = 10e8
 n_D = math.pow(10, -6)
 eta = 0.5  
 n_B = math.pow(10, -3)
