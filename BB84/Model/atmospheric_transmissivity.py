@@ -15,12 +15,7 @@ import numpy as np
 
 
 
-def transmissivity_etat(d_b):
-    kappa = 0.43 * pow(10, -3)
-    eta_t = pow(10, -0.1*kappa*d_b)
-    return eta_t
-
-def atmospheric_transmittance(tau_zen, theta_zen_deg):
+def transmissivity_etat(tau_zen, theta_zen_deg):
     theta_zen_rad = math.radians(theta_zen_deg)
     tau_atm = tau_zen ** (1 / math.cos(theta_zen_rad))
     return tau_atm
@@ -49,7 +44,7 @@ def main():
     plt.figure(figsize=(8, 5))
 
     for tau_zen in tau_zen_values:
-        transmissions = [atmospheric_transmittance(tau_zen, angle) for angle in angles]
+        transmissions = [transmissivity_etat(tau_zen, angle) for angle in angles]
         plt.plot(angles, transmissions, label=fr"$\tau_{{zen}} = {tau_zen}$")
 
     plt.xlabel("Zenith Angle (°)", fontsize=14)
