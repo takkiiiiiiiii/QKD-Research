@@ -5,55 +5,78 @@ import numpy as np
 simulation_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../', 'Model'))
 sys.path.append(simulation_path)
 from circle_beam_transmissivity import transmissivity_etab, satellite_ground_distance, beam_waist, to_decimal_string
-
-from atmospheric_transmissivity import transmissivity_etat
+from atmospheric_transmissivity import atmospheric_transmittance
 
 
 a = 0.75                # Aparture radius
 G = 6.67430e-11         # Gravitational constant
 M_T = 5.972e24          # Earth's mass
 D_E = 6378e3            # Earth's radius (km)
-h_s = 500e3             # Satellite's altitude
+h_s = 400e3             # Satellite's altitude
 d_o = D_E + h_s
 omega = math.sqrt(G * M_T / d_o**3)
 T = 2 * math.pi / omega
-t = T * 0.0           # 周回時間
+t = T * 0.0             # 周回時間
+
+def calculate_theta_deg_from_Rt(R_t):
+    cos_theta = (D_E**2 + d_o**2 - R_t**2) / (2 * D_E * d_o)
+    
+    if abs(cos_theta) > 1:
+        raise ValueError("その距離は物理的に実現不可能です。値を確認してください。")
+
+    # θ_p [rad] → [deg]
+    theta_p_rad = math.acos(cos_theta)
+    theta_p_deg = math.degrees(theta_p_rad)
+    
+    return theta_p_deg
+
+
 
 def main():
     displacement = np.arange(0, 3.1, 0.1)
     r = [a * d for d in displacement]
 
-    theta_min = math.radians(0)
-    theta_max = math.radians(2)
-    theta_list = np.linspace(theta_min, theta_max, 5)
+    tau_zen_list = [0.91, 0.85, 0.75, 0.53]
 
-    t_list = [theta / omega for theta in theta_list]
+    # theta_min = 0
+    # theta_max = 10
+    # theta_list = np.linspace(theta_min, theta_max, 5)
 
     plt.figure(figsize=(9, 6))
 
-    for t in t_list:
-        # 距離 R(t)
-        R_t = satellite_ground_distance(h_s, t)
-        waist = beam_waist(h_s, t)
+    # for theta_deg in theta_list:
+    #     t = math.radians(theta_deg) / omega
+    #     waist = beam_waist(h_s, t)
         
-        # Transmissivity 計算
+    #     eta_b = [transmissivity_etab(a, r_val, waist) for r_val in r]
+    #     eta_t = atmospheric_transmittance(tau_zen, theta_deg)
+
+    #     R_t = satellite_ground_distance(h_s, t)
+
+    #     # transmissivity をパーセンテージ（%）に変換
+    #     gamma_percent = [eta_b_i * eta_t * 100 for eta_b_i in eta_b]
+
+    #     # グラフ描画
+    #     plt.plot(displacement, gamma_percent, marker='o', label=f'θ_p={theta_deg:.1f}° (R(t)={R_t/1e3:.1f} km)')
+
+    waist = 4
+    R_t = 400e3
+    theta_deg = calculate_theta_deg_from_Rt(R_t)
+    for tau_zen in tau_zen_list:
         eta_b = [transmissivity_etab(a, r_val, waist) for r_val in r]
-        eta_t = transmissivity_etat(R_t)
+        eta_t = atmospheric_transmittance(tau_zen, theta_deg)
+        gamma_percent = [eta_b_i * eta_t * 100 for eta_b_i in eta_b]
 
-        # gamma = eta_b * eta_t
-        gamma = [eta_b_i * eta_t for eta_b_i in eta_b]
-
-        theta_deg = omega * t * 180 / math.pi
-        plt.plot(displacement, gamma, marker='o', label=f'θ_p={theta_deg:.1f}° (R={R_t/1e3:.1f} km)')
+        plt.plot(displacement, gamma_percent, marker='o', label=fr'$\tau_{{zen}}$={tau_zen}')
 
     plt.xlabel(f"Beam centroid displacement,  r / a (a={a} m)", fontsize=14)
-    plt.ylabel(r"Combined Transmissivity $\gamma = \langle \eta_b \rangle \times \langle \eta_t \rangle$", fontsize=14)
-    plt.title("Combined Transmissivity vs Beam Displacement", fontsize=16)
+    plt.ylabel(r"Combined Transmissivity $\gamma$ [%]", fontsize=14)  # % に変更
+    plt.title(fr"Received Transmissivity vs Beam Displacement  ($\theta_\text{{zen}}$={theta_deg:.1f}°, LoS={R_t/1e3:.1f} km)", fontsize=16)
     plt.grid(True)
     plt.legend(fontsize=12)
     plt.tight_layout()
 
-    output_path = os.path.join(os.path.dirname(__file__), "gamma_distance.png")
+    output_path = os.path.join(os.path.dirname(__file__), "gamma_vs_displacement_percent.png")
     plt.savefig(output_path)
     print(f"✅ Save as: {output_path}")
     plt.show()
