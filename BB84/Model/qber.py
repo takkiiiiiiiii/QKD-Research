@@ -15,7 +15,7 @@ chi_show = [3, 4, 5]
 
 
 #=======================================================#
-# Channel loss parameter
+# QBER parameters
 #=======================================================#
     #=====================#
     # n_s   : average numher of photon
@@ -25,11 +25,7 @@ chi_show = [3, 4, 5]
     # n_N   : the average number of noise photon reaching each detector
     # gamma : the fraction of transmmited photon
     #======================#
-n_s = 20
-n_D = math.pow(10, -6)
-eta = 0.5  
-n_B = math.pow(10, -3)
-n_N = n_B/2 + n_D
+
 
 
 def qber_loss(eta, n_s, n_N, gamma):
@@ -38,11 +34,22 @@ def qber_loss(eta, n_s, n_N, gamma):
     return term1 * term2
 
 
+def to_decimal_string(x, precision=120):
+    if x == 0:
+        return "0." + "0" * precision
+    return format(x, f'.{precision}f').rstrip('0').rstrip('.')
+
+# 透過率 𝛾 が高いほど、エラー確率（QBER）は低くなる。
 def main():
-    gamma = 4.00423e-02
+    n_s = 10e8
+    n_D = math.pow(10, -6)
+    eta = 0.5  
+    n_B = math.pow(10, -3)
+    n_N = n_B/2 + n_D
+    gamma = 2.88503e-66
     # gamma = 6.068056215528627e-26
-    prob_error = qber_loss(gamma)
-    print(prob_error)
+    prob_error = qber_loss(eta, n_s, n_N, gamma)
+    print(f'QBER: {prob_error}')
 
 
 if __name__ == "__main__":
