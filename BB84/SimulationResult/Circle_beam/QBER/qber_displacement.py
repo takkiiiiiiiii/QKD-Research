@@ -1,4 +1,3 @@
-from scipy.special import lambertw, i0, i1
 import math
 import numpy as np
 import matplotlib.pyplot as plt
