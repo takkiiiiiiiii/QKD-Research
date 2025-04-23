@@ -16,19 +16,19 @@ def main():
 
     for tau_zen in tau_zen_values:
         if tau_zen == 0.91:
-            weather = 'Clear sky'
+            weather = fr'Clear sky($\tau_{{zen}}$={tau_zen})'
         elif tau_zen == 0.85:
-            weather = 'Slightly hazy'
+            weather = fr'Slightly hazy ($\tau_{{zen}}$={tau_zen})'
         elif tau_zen == 0.75:
-            weather = 'Noticeably hazy'
+            weather = fr'Noticeably hazy ($\tau_{{zen}}$={tau_zen})'
         else:
-            weather = 'Poor visibility'
+            weather = fr'Poor visibility ($\tau_{{zen}}$={tau_zen})'
         transmissions = [transmissivity_etat(tau_zen, angle) for angle in angles]
         plt.plot(angles, transmissions, label=fr"{weather}")
 
-    plt.xlabel("Zenith Angle (°)", fontsize=14)
+    plt.xlabel(fr"Zenith Angle ($\theta_{{zen}}$)", fontsize=14)
     plt.ylabel("Atmospheric Transmittance", fontsize=14)
-    plt.title("Atmospheric Transmittance vs Zenith Angle", fontsize=16)
+    plt.title(fr"Atmospheric Transmittance vs Zenith Angle($\theta_{{zen}}$)", fontsize=16)
     plt.grid(True)
     plt.legend(fontsize=12)
     plt.tight_layout()
@@ -38,8 +38,4 @@ def main():
     plt.show()
 
 if __name__ == "__main__":
-    main()
-
-
-if __name__ == '__main__':
     main()
