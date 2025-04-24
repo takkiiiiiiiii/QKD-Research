@@ -5,7 +5,7 @@ import os, sys
 simulation_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../../', 'Model'))
 sys.path.append(simulation_path)
 from circle_beam_transmissivity import transmissivity_etab, satellite_ground_distance, beam_waist
-from atmospheric_transmissivity import atmospheric_transmittance
+from atmospheric_transmissivity import transmissivity_etat
 from qber import qber_loss
 
 
@@ -77,7 +77,7 @@ def main():
         waist = beam_waist(h_s, t)
 
         theta_deg = omega * t * 180 / math.pi
-        eta_t = atmospheric_transmittance(tau_zen, theta_deg)
+        eta_t = transmissivity_etat(tau_zen, theta_deg)
 
         # Transmissivity 計算
         eta_b = [transmissivity_etab(a, r_val, waist) for r_val in r]
@@ -96,7 +96,7 @@ def main():
         # グラフ描画
         plt.plot(r, qber_values, marker='o', label=fr'$\theta_{{zen}}$={theta_deg:.1f}° (R={R_t/1e3:.1f} km)')
 
-    plt.xlabel(f"Beam centroid displacement r (m)", fontsize=14)
+    plt.xlabel(f"Beam centroid displacement r (m), (a = {a}m)", fontsize=14)
     plt.ylabel(r"QBER (Quantum Bit Error Rate)", fontsize=14)
     plt.title(fr"QBER vs Beam Displacement  ($\tau_{{zen}}$={tau_zen})", fontsize=16)
     plt.grid(True)
