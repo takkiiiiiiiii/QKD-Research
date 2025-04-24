@@ -28,7 +28,7 @@ from atmospheric_transmissivity import transmissivity_etat
     # D_E : Earth's radius (km)
     # h_s : Satellite's altitude
     #======================#
-a = 10             
+a = 0.75             
 G = 6.67430e-11       
 M_T = 5.972e24      
 D_E = 6378e3       
@@ -92,9 +92,11 @@ def main():
         # プロット
         plt.plot(np.degrees(theta_list), gamma_percent_list, label=fr'{weather}')
 
-    plt.xlabel(r"Zenith Angle $\theta_\mathrm{zen}$ [°]", fontsize=14)
-    plt.ylabel(r"Combined Transmissivity $\gamma$ [%]", fontsize=14)
-    plt.title(fr"Received Transmissivity vs Zenith Angle (r={r_fixed} m)", fontsize=16)
+    plt.xlabel(r"Zenith Angle $\theta_\mathrm{zen}$ [°]", fontsize=20)
+    plt.ylabel(r"Combined Transmissivity $\gamma$ [%]", fontsize=20)
+    plt.title(fr"Received Transmissivity vs Zenith Angle (r={r_fixed} m)", fontsize=20)
+    plt.xticks(fontsize=24)
+    plt.yticks(fontsize=24)
     plt.grid(True)
     plt.legend(fontsize=12)
     plt.tight_layout()
