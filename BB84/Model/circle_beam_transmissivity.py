@@ -145,19 +145,12 @@ def simulation_eta_b(h_s):
     r = [a*d for d in displacement]
     waist = beam_waist(h_s, t)
     print(f'Beam waist: {waist}')
-    W = [0.2*a, 1.0*a, 1.8*a]
     print("===============================")
     print(f'Aperture of radius (Receiver radis in meters): {a} m')
-    # for i in range(len(W)):
-    #         print(f"--- W[{i}] = {W[i]} ---")
-    #         for displacement in r:
-    #             eta_b = transmissivity_etab(a, displacement, W[i])
-    #             print(f"r = {displacement}, eta_b = {eta_b}")
     for displacement in r:
         eta_b = transmissivity_etab(a, displacement, waist)
         print(f"r = {displacement}, eta_b = {eta_b}")
     print("===============================\n")
-    
     
     print("Simulation Finish !!")
 
