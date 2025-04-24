@@ -43,7 +43,6 @@ def main():
     plt.xlabel(fr'Zenith angle ($\theta_{{zen}}$) [deg]', fontsize=20)
     plt.ylabel("Transmissivity ⟨η_b⟩", fontsize=20)
     plt.title(r'Beam Transmissivity vs Zenith Angle ($\theta_{\rm zen}$)', fontsize=20)
-    # ラベルのフォントサイズ
     plt.xticks(fontsize=24)
     plt.yticks(fontsize=24)
 

@@ -19,7 +19,7 @@ t = T * 0.0           # 周回時間
 
 def main():
     # ======= 定義 =========== #
-    r = np.arange(0, 11, 1)  # ビームのずれ範囲 [m]
+    r = np.arange(0, 7, 0.5)  # ビームのずれ範囲 [m]
     print("===============================")
     print(f'Aperture radius (Receiver): {a} m')
 
@@ -41,19 +41,20 @@ def main():
         theta_deg = math.degrees(theta_rad)
 
         # プロット
-        plt.plot(r, eta_b, marker='o', label=f'Zenith angle={theta_deg:.1f}°')
+        plt.plot(r, eta_b, marker='o', label=fr'Zenith angle($\theta_{{zen}}$)={theta_deg:.1f}°')
 
     print("===============================\n")
 
     # グラフ装飾
-    plt.xlabel(f"Beam centroid displacement r [m] (a={a}m)", fontsize=14)
-    plt.ylabel("Transmissivity ⟨η_b⟩", fontsize=14)
-    plt.title("Circle Beam Transmissivity vs Beam Displacement", fontsize=16)
+    plt.xlabel(f"Beam centroid displacement r [m] (a={a}m)", fontsize=20)
+    plt.ylabel("Transmissivity ⟨η_b⟩", fontsize=20)
+    plt.title("Circle Beam Transmissivity vs Beam Displacement", fontsize=20)
     plt.legend(fontsize=12)
+    plt.xticks(fontsize=24)
+    plt.yticks(fontsize=24)
     plt.grid(True)
     plt.tight_layout()
 
-    # 画像保存
     output_path = os.path.join(os.path.dirname(__file__), "transmissivity_vs_displacement_for_zenith_angle.png")
     plt.savefig(output_path)
     print(f"✅ Saved as: {output_path}")
