@@ -7,7 +7,7 @@ sys.path.append(simulation_path)
 from circle_beam_transmissivity import transmissivity_etab, beam_waist, to_decimal_string
 
 
-a = 5              # Aparture radius
+a = 0.75              # Aparture radius
 G = 6.67430e-11         # Gravitational constant
 M_T = 5.972e24          # Earth's mass
 D_E = 6378e3            # Earth's radius (km)
@@ -19,7 +19,7 @@ t = T * 0.0           # 周回時間
 
 def main():
     # ======= 定義 =========== #
-    r = np.arange(0, 50, 1)  # ビームのずれ範囲 [m]
+    r = np.arange(0, 11, 1)  # ビームのずれ範囲 [m]
     print("===============================")
     print(f'Aperture radius (Receiver): {a} m')
 
