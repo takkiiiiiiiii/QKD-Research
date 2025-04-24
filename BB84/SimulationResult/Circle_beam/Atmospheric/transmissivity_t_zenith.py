@@ -26,9 +26,11 @@ def main():
         transmissions = [transmissivity_etat(tau_zen, angle) for angle in angles]
         plt.plot(angles, transmissions, label=fr"{weather}")
 
-    plt.xlabel(fr"Zenith Angle ($\theta_{{zen}}$)", fontsize=14)
-    plt.ylabel("Atmospheric Transmittance", fontsize=14)
-    plt.title(fr"Atmospheric Transmittance vs Zenith Angle($\theta_{{zen}}$)", fontsize=16)
+    plt.xlabel(fr"Zenith Angle ($\theta_{{zen}}$)", fontsize=20)
+    plt.ylabel("Atmospheric Transmittance", fontsize=20)
+    plt.title(fr"Atmospheric Transmittance vs Zenith Angle($\theta_{{zen}}$)", fontsize=20)
+    plt.xticks(fontsize=24)
+    plt.yticks(fontsize=24)
     plt.grid(True)
     plt.legend(fontsize=12)
     plt.tight_layout()
