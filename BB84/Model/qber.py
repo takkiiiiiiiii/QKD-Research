@@ -24,15 +24,17 @@ chi_show = [3, 4, 5]
     # n_B   : background photons per polarization
     # n_N   : the average number of noise photon reaching each detector
     # gamma : the fraction of transmmited photon
+    # e_0   : 
     #======================#
+n_s = 10^8
+e_0 = 0.5
+Y_0 = 10e-5
+e_dec = 0.01
 
-
-
-def qber_loss(eta, n_s, n_N, gamma):
-    term1 = np.exp(-eta * (n_s * gamma + 3 * n_N))
-    term2 = 1 - np.exp(-eta * n_N)
-    return term1 * term2
-
+def qber_loss(gamma):
+    ave_no_photon = n_s*gamma
+    qber = e_0 * Y_0 + e_dec(1-np.exp(-ave_no_photon))
+    return qber
 
 def to_decimal_string(x, precision=120):
     if x == 0:
@@ -41,11 +43,13 @@ def to_decimal_string(x, precision=120):
 
 # 透過率 𝛾 が高いほど、エラー確率（QBER）は低くなる。
 def main():
-    n_s = 10e8
-    n_D = math.pow(10, -6)
-    eta = 0.5  
-    n_B = math.pow(10, -3)
-    n_N = n_B/2 + n_D
+    # n_s = 10e8
+    # n_D = math.pow(10, -6)
+    # eta = 0.5  
+    # n_B = math.pow(10, -3)
+    # n_N = n_B/2 + n_D
+    e_0 = 1/2
+    y_0 = 
     gamma = 2.88503e-66
     # gamma = 6.068056215528627e-26
     prob_error = qber_loss(eta, n_s, n_N, gamma)
