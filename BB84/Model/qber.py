@@ -18,13 +18,11 @@ chi_show = [3, 4, 5]
 # QBER parameters
 #=======================================================#
     #=====================#
-    # n_s   : average numher of photon
-    # n_D   : dark-current-equivalent averrage photon number
-    # eta   : APD (single-photon avalanche photodiode) detection efficiency
-    # n_B   : background photons per polarization
-    # n_N   : the average number of noise photon reaching each detector
+    # n_s   : average numher of photon from Alice
     # gamma : the fraction of transmmited photon
-    # e_0   : 
+    # e_0   : the error rate of the background
+    # Y_0   : the background rate which includes the detector dark count and other background contributions
+    # e_dec : the probability that a photon hits the erroneous detector
     #======================#
 n_s = 10^8
 e_0 = 0.5
@@ -32,7 +30,7 @@ Y_0 = 10e-5
 e_dec = 0.01
 
 def qber_loss(gamma):
-    ave_no_photon = n_s*gamma
+    ave_no_photon = n_s*gamma # average number of photons received by Bob
     qber = e_0 * Y_0 + e_dec(1-np.exp(-ave_no_photon))
     return qber
 
