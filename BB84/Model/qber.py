@@ -41,7 +41,7 @@ def to_decimal_string(x, precision=120):
 
 # 透過率 𝛾 が高いほど、エラー確率（QBER）は低くなる。
 def main():
-    gamma = 
+    gamma = 0.15
     # gamma = 6.068056215528627e-26
     prob_error = qber_loss(gamma)
     print(f'QBER: {prob_error}')
