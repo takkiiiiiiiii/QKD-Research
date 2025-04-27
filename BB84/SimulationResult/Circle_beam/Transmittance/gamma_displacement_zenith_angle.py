@@ -51,63 +51,62 @@ def calculate_theta_deg_from_Rt(R_t):
     
     return theta_p_deg
 
-
 def main():
     r = np.arange(0, 7, 0.5)
-    tau_zen_list = [0.91, 0.85, 0.75, 0.53]
 
-    # theta_min = 0
-    # theta_max = 10
-    # theta_list = np.linspace(theta_min, theta_max, 5)
+    # --- θ_p の範囲設定 ---
+    theta_min = math.radians(0)     # 0°
+    theta_max = math.radians(10)    # 10°
+    theta_list = np.linspace(theta_min, theta_max, 5)
+    t_list = [theta / omega for theta in theta_list]
 
+    # --- 大気損失設定（例としてtau_zen = 0.91だけ使用） ---
+    tau_zen = 0.91
+
+    # --- プロット ---
     plt.figure(figsize=(9, 6))
 
-    # for theta_deg in theta_list:
-    #     t = math.radians(theta_deg) / omega
-    #     waist = beam_waist(h_s, t)
-        
-    #     eta_b = [transmissivity_etab(a, r_val, waist) for r_val in r]
-    #     eta_t = atmospheric_transmittance(tau_zen, theta_deg)
+    for t in t_list:
+        # 衛星-地上間距離
+        R_t = satellite_ground_distance(h_s, t)
+        # ビームウエスト計算
+        waist = beam_waist(h_s, t)
+        # 現在の時刻tにおける天頂角 [deg]
+        theta_deg = omega * t * 180 / math.pi
 
-    #     R_t = satellite_ground_distance(h_s, t)
-
-    #     # transmissivity をパーセンテージ（%）に変換
-    #     gamma_percent = [eta_b_i * eta_t * 100 for eta_b_i in eta_b]
-
-    #     # グラフ描画
-    #     plt.plot(displacement, gamma_percent, marker='o', label=f'θ_p={theta_deg:.1f}° (R(t)={R_t/1e3:.1f} km)')
-
-    waist = 4
-    R_t = 500e3
-    theta_deg = calculate_theta_deg_from_Rt(R_t)
-    for tau_zen in tau_zen_list:
-        if tau_zen == 0.91:
-            weather = 'Clear sky'
-        elif tau_zen == 0.85:
-            weather = 'Slightly hazy'
-        elif tau_zen == 0.75:
-            weather = 'Noticeably hazy'
-        else:
-            weather = 'Poor visibility'
-        eta_b = [transmissivity_etab(a, r_val, waist) for r_val in r]
+        # 大気損失
         eta_t = transmissivity_etat(tau_zen, theta_deg)
-        gamma_percent = [eta_b_i * eta_t * 100 for eta_b_i in eta_b]
 
-        plt.plot(r, gamma_percent, marker='o', label=fr'{weather}')
+        # ビーム拡がりロス
+        eta_b = [transmissivity_etab(a, r_val, waist) for r_val in r]
 
-    plt.xlabel(f"Beam centroid displacement r m", fontsize=20)
+        # 総合損失
+        gamma = [eta_b_i * eta_t * 100 for eta_b_i in eta_b]
+
+        # QBER計算 (パーセントに変換)
+        # qber_values = [qber_loss(gamma_i) * 100 for gamma_i in gamma]
+
+        # QBER表示（オプション）
+        print(f"\n--- θ_p = {theta_deg:.2f}° (R={R_t/1e3:.2f} km) ---")
+       
+        # グラフ
+        plt.plot(r, gamma, marker='o', label=fr'$\theta_{{zen}}$={theta_deg:.1f}° (R={R_t/1e3:.1f} km)')
+
+    # --- グラフ仕上げ ---
+    plt.xlabel(r"Beam centroid displacement $r$ [m]", fontsize=20)
     plt.ylabel(r"Combined Transmissivity $\gamma$ [%]", fontsize=20)  # % に変更
-    plt.title(fr"Received Transmissivity vs Beam Displacement  ($\theta_\text{{zen}}$={theta_deg:.1f}°, LoS={R_t/1e3:.1f} km)", fontsize=20)
+    plt.title(r"$\gamma$ vs Beam Displacement (Clear Sky)", fontsize=20)
     plt.grid(True)
     plt.legend(fontsize=12)
     plt.xticks(fontsize=24)
     plt.yticks(fontsize=24)
     plt.tight_layout()
 
-    output_path = os.path.join(os.path.dirname(__file__), "gamma_vs_displacement_percent.png")
+    # --- 保存 & 表示 ---
+    output_path = os.path.join(os.path.dirname(__file__), "gamma_vs_displacement _plot.png")
     plt.savefig(output_path)
-    print(f"✅ Save as: {output_path}")
+    print(f"✅ Saved as: {output_path}")
     plt.show()
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()
