@@ -26,16 +26,6 @@ def to_decimal_string(x, precision=150):
         return "0." + "0" * precision
     return format(x, f'.{precision}f').rstrip('0').rstrip('.')
 
-# def main():
-#     # distances = np.arange(100, 1600, 100) 
-#     # Starlink uses Low-Earth Orbit (LEO) satellites to orbit the Earth at a height of between 180 to 2,000km.
-#     distances = np.arange(100000, 2100000, 100000) 
-#     all_eta_t = [transmissivity_etat(d_b) for d_b in distances]
-#     for j, eta_t in enumerate(all_eta_t):
-#         print(f"d_b = {distances[j]} → <ηt> = {to_decimal_string(eta_t)}")
-#         print("===============================\n")
-#     print("Simulation Finish !!\n")
-
 
 def main():
     tau_zen_values = [0.91, 0.85, 0.75, 0.53]

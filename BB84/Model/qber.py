@@ -19,7 +19,6 @@ chi_show = [3, 4, 5]
 #=======================================================#
     #=====================#
     # n_s   : average numher of photon from Alice
-    # gamma : the fraction of transmmited photon
     # e_0   : the error rate of the background
     # Y_0   : the background rate which includes the detector dark count and other background contributions
     # e_dec : the probability that a photon hits the erroneous detector
@@ -43,8 +42,8 @@ def to_decimal_string(x, precision=120):
 def main():
     gamma = 0.15
     # gamma = 6.068056215528627e-26
-    prob_error = qber_loss(gamma)
-    print(f'QBER: {prob_error}')
+    prob_error = qber_loss(gamma) * 100
+    print(f'QBER: {prob_error} %')
 
 
 if __name__ == "__main__":
