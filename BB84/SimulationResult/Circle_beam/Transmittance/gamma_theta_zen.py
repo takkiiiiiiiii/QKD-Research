@@ -27,12 +27,14 @@ from atmospheric_transmissivity import transmissivity_etat
     # M_T : Earth's mass
     # D_E : Earth's radius (km)
     # h_s : Satellite's altitude
+    # H_a : Receiver's altitude
     #======================#
 a = 0.75             
 G = 6.67430e-11       
 M_T = 5.972e24      
 D_E = 6378e3       
 h_s = 500e3       
+H_a = 0.01
 
 d_o = D_E + h_s
 omega = math.sqrt(G * M_T / d_o**3)
@@ -75,15 +77,13 @@ def main():
 
         gamma_percent_list = []
 
-        for theta_rad in theta_list:
-            # 角度→時間へ
-            t = theta_rad / omega
+        for theta_zen_rad in theta_list:
             # ビームウエスト計算
-            waist = beam_waist(h_s, t)
+            waist = beam_waist(h_s, H_a, theta_zen_rad)
             # eta_b (指向ずれ損失)
             eta_b = transmissivity_etab(a, r_fixed, waist)
             # eta_t (大気透過率)
-            eta_t = transmissivity_etat(tau_zen, abs(math.degrees(theta_rad)))
+            eta_t = transmissivity_etat(tau_zen, theta_zen_rad)
 
             # γ = η_b × η_t（[%] に変換）
             gamma_percent = eta_b * eta_t * 100

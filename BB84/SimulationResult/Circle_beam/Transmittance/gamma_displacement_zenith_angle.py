@@ -48,7 +48,7 @@ def main():
 
     # --- θ_p の範囲設定 ---
     theta_min = math.radians(0)     # 0°
-    theta_max = math.radians(70)    # 10°
+    theta_max = math.radians(60)    # 10°
     theta_list = np.linspace(theta_min, theta_max, 7)
     # t_list = [theta / omega for theta in theta_list]
 
