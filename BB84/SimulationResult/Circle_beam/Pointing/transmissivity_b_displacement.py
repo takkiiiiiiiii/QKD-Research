@@ -12,10 +12,6 @@ G = 6.67430e-11         # Gravitational constant
 M_T = 5.972e24          # Earth's mass
 D_E = 6378e3            # Earth's radius (km)
 h_s = 500e3             # Satellite's altitude
-d_o = D_E + h_s
-omega = math.sqrt(G * M_T / d_o**3)
-T = 2 * math.pi / omega
-t = T * 0.0           # 周回時間
 H_a = 0.01
 
 def main():

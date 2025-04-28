@@ -22,12 +22,13 @@ from atmospheric_transmissivity import transmissivity_etat
 # eta_b parameters (Pointing loss)
 #=======================================================#
     #=====================#
-    # a   : Aparture radius
-    # G   : Gravitational constant
-    # M_T : Earth's mass
-    # D_E : Earth's radius (km)
-    # h_s : Satellite's altitude
-    # H_a : Receiver's altitude
+    # a       : Aparture radius
+    # G       : Gravitational constant
+    # M_T     : Earth's mass
+    # D_E     : Earth's radius (km)
+    # h_s     : Satellite's altitude (m)
+    # H_a     : Receiver's altitude
+    # theta_d : Divergence angle
     #======================#
 a = 0.75               
 G = 6.67430e-11       
@@ -35,12 +36,8 @@ M_T = 5.972e24
 D_E = 6378e3       
 h_s = 500e3       
 H_a = 0.01
+theta_d_rad = 20e-6
 
-
-d_o = D_E + h_s
-omega = math.sqrt(G * M_T / d_o**3)
-T = 2 * math.pi / omega
-t = T * 0.0             # Time in orbit of the satellite (the time elapsed when the satellite moves from the reference point)
 
 
 def main():
@@ -62,7 +59,7 @@ def main():
         # 衛星-地上間距離
         L_a = satellite_ground_distance(h_s, H_a, theta_zen_rad)
         # ビームウエスト計算
-        waist = beam_waist(h_s, H_a, theta_zen_rad)
+        waist = beam_waist(h_s, H_a, theta_zen_rad, theta_d_rad)
         # 現在の時刻tにおける天頂角 [deg]
         # theta_zen_deg = omega * t * 180 / math.pi
 
@@ -78,7 +75,7 @@ def main():
 
         theta_zen_deg = math.degrees(theta_zen_rad)
         
-        print(f"\n--- θ_p = {theta_zen_deg:.2f}° (R={L_a/1e3:.2f} km) ---")
+        print(f"\n--- θ_p = {theta_zen_deg:.2f}° (L={L_a/1e3:.2f} km) ---")
        
         plt.plot(r, gamma, marker='o', label=fr'$\theta_{{zen}}$={theta_zen_deg:.1f}° (R={L_a/1e3:.1f} km)')
 
