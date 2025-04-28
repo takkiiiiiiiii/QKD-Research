@@ -21,14 +21,14 @@ chi_show = [3, 4, 5]
     # n_s   : average numher of photon from Alice
     # e_0   : the error rate of the background
     # Y_0   : the background rate which includes the detector dark count and other background contributions
-    # e_dec : the probability that a photon hits the erroneous detector
+    # P_pa  : After-pulsing probability
+    # e_pol : Probability of the polarisation errors
     #======================#
-n_s = 10^8
+n_s = 0.1
 e_0 = 0.5
 Y_0 = 10e-4
-e_dec = 0.033
 P_pa = 0.02
-e_pol = 0.02
+e_pol = 0.033
 
 def qber_loss(gamma):
     denominator =  e_0 * Y_0 + (e_pol*e_0*P_pa) * (1-np.exp(-n_s*gamma))
@@ -42,10 +42,8 @@ def to_decimal_string(x, precision=120):
         return "0." + "0" * precision
     return format(x, f'.{precision}f').rstrip('0').rstrip('.')
 
-# 透過率 𝛾 が高いほど、エラー確率（QBER）は低くなる。
 def main():
     gamma = 0.04
-    # gamma = 6.068056215528627e-26
     prob_error = qber_loss(gamma) * 100
     print(f'QBER: {prob_error} %')
 
