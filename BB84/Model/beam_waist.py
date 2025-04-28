@@ -23,7 +23,7 @@ H_g = 0.01
 #=======================================================#
 def beam_waist(h_s, H_a, theta_zen_rad):
     L_a = satellite_ground_distance(h_s, H_a, theta_zen_rad)
-    theta_d = 10e-6  # divergence angle(mrad)
+    theta_d = 20e-6  # divergence angle(mrad)
     waist = L_a * theta_d
     return waist
 

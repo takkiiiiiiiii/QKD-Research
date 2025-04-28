@@ -24,6 +24,9 @@ D_E = 6378e3             # Earth's radius (km)
 # Receiver altitude(アンテナの高さ e.g., 10m)
 H_g = 0.01
 
+# Divergence angle
+theta_d_rad = 20e-6
+
 #=======================================================#
 # Transmissivity nb(eta_b)
 #=======================================================#
@@ -115,10 +118,9 @@ def to_decimal_string(x, precision=70):
 #=======================================================#
 # Beam waist function
 #=======================================================#
-def beam_waist(h_s, H_a, theta_zen_rad):
+def beam_waist(h_s, H_a, theta_zen_rad, theta_d_rad):
     L_a = satellite_ground_distance(h_s, H_a, theta_zen_rad)
-    theta_d = 10e-6  # divergence angle(mrad)
-    waist = L_a * theta_d
+    waist = L_a * theta_d_rad
     return waist
 
 #=======================================================#
