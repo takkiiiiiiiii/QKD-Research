@@ -4,8 +4,7 @@ import numpy as np
 # from Model.eliptic_beam_transmissivity import transmissivity, to_decimal_string
 
 
-D_r = 0.35 # D_r    : Deceiver diameter in meters
-a = D_r/2  # a      : Aperture of radius (Receiver radis in meters)
+a = 0.75      # Aperture of radius (Receiver radis in meters)
 ratios = np.arange(0, 3.1, 0.1)
 r0 = [r * a for r in ratios]
 mag_w1 = [0.2, 1.0, 1.8]
@@ -24,15 +23,15 @@ chi_show = [3, 4, 5]
     # P_pa  : After-pulsing probability
     # e_pol : Probability of the polarisation errors
     #======================#
-n_s = 0.1
+n_s = 0.8
 e_0 = 0.5
-Y_0 = 10e-4
-P_pa = 0.02
+Y_0 = 1e-4
+P_AP = 0.02
 e_pol = 0.033
 
 def qber_loss(gamma):
-    denominator =  e_0 * Y_0 + (e_pol*e_0*P_pa) * (1-np.exp(-n_s*gamma))
-    numerator = Y_0 + (1-np.exp(-n_s*gamma)) * (1+P_pa)
+    denominator =  e_0 * (Y_0*(1+P_AP)) + (e_pol+e_0*P_AP) * (1-np.exp(-n_s*gamma))
+    numerator = (Y_0*(1+P_AP)) + (1-np.exp(-n_s*gamma)) * (1+P_AP)
 
     qber = denominator/numerator
     return qber
@@ -43,7 +42,7 @@ def to_decimal_string(x, precision=120):
     return format(x, f'.{precision}f').rstrip('0').rstrip('.')
 
 def main():
-    gamma = 0.04
+    gamma = 0.5/100
     prob_error = qber_loss(gamma) * 100
     print(f'QBER: {prob_error} %')
 
