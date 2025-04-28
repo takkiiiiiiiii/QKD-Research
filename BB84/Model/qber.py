@@ -32,8 +32,8 @@ e_pol = 0.02
 
 def qber_loss(gamma):
     denominator =  e_0 * Y_0 + (e_pol*e_0*P_pa) * (1-np.exp(-n_s*gamma))
-    numerator = Y_0 + (1-np.exp(-n_s*gamma)) * (1+P_pa)../Model/qber.py
-    
+    numerator = Y_0 + (1-np.exp(-n_s*gamma)) * (1+P_pa)
+
     qber = denominator/numerator
     return qber
 

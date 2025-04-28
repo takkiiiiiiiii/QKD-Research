@@ -47,11 +47,11 @@ H_a = 0.01
     # Y_0   : the background rate which includes the detector dark count and other background contributions
     # e_dec : the probability that a photon hits the erroneous detector
     #======================#
-n_s = 10e8
+n_s = 0.1
 e_0 = 0.5
 Y_0 = 10e-4
 e_dec = 0.01
-e_pol = 0.02
+e_pol = 0.033
 P_pa = 0.02
 
 
@@ -60,8 +60,8 @@ def main():
     r = np.arange(0, 7, 0.5) 
 
     theta_min = math.radians(0)
-    theta_max = math.radians(70)
-    theta_list = np.linspace(theta_min, theta_max, 5)
+    theta_max = math.radians(60)
+    theta_list = np.linspace(theta_min, theta_max, 7)
 
     plt.figure(figsize=(9, 6))
 
@@ -83,11 +83,11 @@ def main():
 
         theta_zen_deg = np.degrees(theta_zen_rad)
 
-        print(f"\n--- θ_p = {theta_zen_deg:.2f}° (R={L_a/1e3:.2f} km, eta_t={eta_t:.4f}) ---")
+        print(f"\n--- θ_p = {theta_zen_deg:.2f}° (L={L_a/1e3:.2f} km, eta_t={eta_t:.4f}) ---")
         for i in range(len(r)):
             print(f'Gamma: {gamma[i]:.5e}, r={r[i]:.1f} m → QBER = {qber_values[i]}')
 
-        plt.plot(r, qber_values, marker='o', label=fr'$\theta_{{zen}}$={theta_zen_deg:.1f}° (R={L_a/1e3:.1f} km)')
+        plt.plot(r, qber_values, marker='o', label=fr'$\theta_{{zen}}$={theta_zen_deg:.1f}° (L={L_a/1e3:.1f} km)')
 
     plt.xlabel(f"Beam centroid displacement r (m), (a = {a}m)", fontsize=20)
     plt.ylabel(r"QBER (Quantum Bit Error Rate) [%]", fontsize=20)
