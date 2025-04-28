@@ -25,12 +25,16 @@ chi_show = [3, 4, 5]
     #======================#
 n_s = 10^8
 e_0 = 0.5
-Y_0 = 10e-5
-e_dec = 0.01
+Y_0 = 10e-4
+e_dec = 0.033
+P_pa = 0.02
+e_pol = 0.02
 
 def qber_loss(gamma):
-    ave_no_photon = n_s*gamma # average number of photons received by Bob
-    qber = e_0 * Y_0 + e_dec*(1-np.exp(-ave_no_photon))
+    denominator =  e_0 * Y_0 + (e_pol*e_0*P_pa) * (1-np.exp(-n_s*gamma))
+    numerator = Y_0 + (1-np.exp(-n_s*gamma)) * (1+P_pa)../Model/qber.py
+    
+    qber = denominator/numerator
     return qber
 
 def to_decimal_string(x, precision=120):
@@ -40,11 +44,10 @@ def to_decimal_string(x, precision=120):
 
 # 透過率 𝛾 が高いほど、エラー確率（QBER）は低くなる。
 def main():
-    gamma = 0.15
+    gamma = 0.04
     # gamma = 6.068056215528627e-26
     prob_error = qber_loss(gamma) * 100
     print(f'QBER: {prob_error} %')
-
 
 if __name__ == "__main__":
     main()

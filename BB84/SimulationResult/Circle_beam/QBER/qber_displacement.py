@@ -37,11 +37,6 @@ D_E = 6378e3
 h_s = 500e3       
 H_a = 0.01
 
-d_o = D_E + h_s
-omega = math.sqrt(G * M_T / d_o**3)
-T = 2 * math.pi / omega
-t = T * 0.0             # Time in orbit of the satellite (the time elapsed when the satellite moves from the reference point)
-
 
 #=======================================================#
 # QBER parameters
@@ -54,9 +49,10 @@ t = T * 0.0             # Time in orbit of the satellite (the time elapsed when 
     #======================#
 n_s = 10e8
 e_0 = 0.5
-Y_0 = 10e-5
+Y_0 = 10e-4
 e_dec = 0.01
-
+e_pol = 0.02
+P_pa = 0.02
 
 
 
