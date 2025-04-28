@@ -15,8 +15,7 @@ import numpy as np
 
 
 
-def transmissivity_etat(tau_zen, theta_zen_deg):
-    theta_zen_rad = math.radians(theta_zen_deg)
+def transmissivity_etat(tau_zen, theta_zen_rad):
     tau_atm = tau_zen ** (1 / math.cos(theta_zen_rad))
     return tau_atm
 

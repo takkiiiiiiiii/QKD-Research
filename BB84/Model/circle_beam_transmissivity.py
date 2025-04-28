@@ -21,7 +21,8 @@ M_T = 5.972e24          # Earth's mass
 D_E = 6378e3             # Earth's radius (km)
 #=======================================================#
 
-
+# Receiver altitude(アンテナの高さ e.g., 10m)
+H_g = 0.01
 
 #=======================================================#
 # Transmissivity nb(eta_b)
@@ -114,10 +115,10 @@ def to_decimal_string(x, precision=70):
 #=======================================================#
 # Beam waist function
 #=======================================================#
-def beam_waist(h_s, t):
-    R_t = satellite_ground_distance(h_s, t)
+def beam_waist(h_s, H_a, theta_zen_rad):
+    L_a = satellite_ground_distance(h_s, H_a, theta_zen_rad)
     theta_d = 10e-6  # divergence angle(mrad)
-    waist = R_t * theta_d
+    waist = L_a * theta_d
     return waist
 
 #=======================================================#
@@ -125,11 +126,21 @@ def beam_waist(h_s, t):
 # h_s : Satellite's altitude
 # t: time
 #=======================================================#
-def satellite_ground_distance(h_s, t): 
-    d_o = D_E + h_s # orbital radius
-    omega = math.sqrt(G * M_T / d_o**3)
-    R_t = math.sqrt(D_E**2 + d_o**2 - 2 * D_E * d_o * math.cos(omega * t))
-    return R_t
+# def satellite_ground_distance(h_s, t): 
+#     d_o = D_E + h_s # orbital radius
+#     omega = math.sqrt(G * M_T / d_o**3)
+#     R_t = math.sqrt(D_E**2 + d_o**2 - 2 * D_E * d_o * math.cos(omega * t))
+#     return R_t
+
+
+#=======================================================#
+# The distance between satellite and ground station
+# h_s       : Satellite's altitude
+# theta_zen : Zenith angle
+#=======================================================#
+def satellite_ground_distance(h_s, H_g, theta_zen_rad):
+    return (h_s - H_g) / math.cos(theta_zen_rad)
+
 
 def simulation_eta_b(h_s):
     # =======Definition of parameter =========== #

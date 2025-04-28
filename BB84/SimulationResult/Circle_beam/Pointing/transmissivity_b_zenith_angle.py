@@ -23,16 +23,18 @@ r_fixed_list = [10]
 
 def main():
     # 天頂角θの範囲 [°] をラジアンに変換
-    theta_deg_list = np.linspace(-60, 60, 100)
-    theta_rad_list = np.radians(theta_deg_list)
+    theta_min = math.radians(-60)
+    theta_max = math.radians(60)
+    theta_rad_list = np.linspace(theta_min, theta_max, 30)  # プロットする角度数（5本）
+    # theta_deg_list = np.linspace(-60, 60, 100)
+    theta_deg_list = np.degrees(theta_rad_list)
 
     plt.figure(figsize=(9, 6))
 
     for r_fixed in r_fixed_list:
         eta_b_list = []
-        for theta_rad in theta_rad_list:
-            t = theta_rad / omega
-            waist = beam_waist(h_s, t)
+        for theta_zen_rad in theta_rad_list:
+            waist = beam_waist(h_s, theta_zen_rad)
             eta_b = transmissivity_etab(a, r_fixed, waist)
             eta_b_list.append(eta_b)
 

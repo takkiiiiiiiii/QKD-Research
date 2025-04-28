@@ -21,18 +21,19 @@ omega = math.sqrt(G * M_T / d_o**3)
 
 def main():
     r = np.arange(0, 7, 0.5)  # Beam displacement range [m]
-    theta_min = 0
-    theta_max = 10
+    theta_min = math.radians(0)
+    theta_max = math.radians(10)
     theta_list = np.linspace(theta_min, theta_max, 5)  # Zenith angles from 0 to 10 degrees
 
     plt.figure(figsize=(9, 6))
 
-    for theta_deg in theta_list:
+    for theta_zen_rad in theta_list:
         # Calculate eta_t for each zenith angle
-        eta_t = [transmissivity_etat(tau_zen, theta_deg) for _ in r]
+        eta_t = [transmissivity_etat(tau_zen, theta_zen_rad) for _ in r]
 
+        theta_zen_deg = math.degrees(theta_zen_rad)
         # Plot the result
-        plt.plot(r, eta_t, marker='o', label=fr'$\theta_{{zen}}$={theta_deg}°')
+        plt.plot(r, eta_t, marker='o', label=fr'$\theta_{{zen}}$={theta_zen_deg}°')
 
     plt.xlabel("Beam centroid displacement r (m)", fontsize=20)
     plt.ylabel(r"Atmospheric Transmissivity $\eta_t$", fontsize=20)

@@ -16,6 +16,7 @@ d_o = D_E + h_s
 omega = math.sqrt(G * M_T / d_o**3)
 T = 2 * math.pi / omega
 t = T * 0.0           # 周回時間
+H_a = 0.01
 
 def main():
     # ======= 定義 =========== #
@@ -25,33 +26,31 @@ def main():
 
 
     # θ_pの範囲（ラジアン）
-    theta_min = math.radians(0)
-    theta_max = math.radians(10)
-    theta_list = np.linspace(theta_min, theta_max, 5)  # プロットする角度数（5本）
+    theta_min = math.radians(10)
+    theta_max = math.radians(70)
+    theta_list = np.linspace(theta_min, theta_max, 7)  # プロットする角度数（5本）
 
     plt.figure(figsize=(9, 6))
 
-    for theta_rad in theta_list:
-        # 角度→時間へ
-        t = theta_rad / omega
+    for theta_zen_rad in theta_list:
         # LoS distance
-        R_t = satellite_ground_distance(h_s, t)
+        L_a = satellite_ground_distance(h_s, H_a, theta_zen_rad)
         # ビームウエスト計算
-        waist = beam_waist(h_s, t)
+        waist = beam_waist(h_s, theta_zen_rad)
         # 各rでの eta_b 計算
         eta_b = [transmissivity_etab(a, r_val, waist) for r_val in r]
         # zenith angle [deg]
-        theta_deg = math.degrees(theta_rad)
+        theta_deg = math.degrees(theta_zen_rad)
 
         # プロット
-        plt.plot(r, eta_b, marker='o', label=fr'$\theta_{{zen}}$={theta_deg:.1f}° (R={R_t/1e3:.1f} km)')
+        plt.plot(r, eta_b, marker='o', label=fr'$\theta_{{zen}}$={theta_deg:.1f}° (LoS={L_a/1e3:.1f} km)')
 
     print("===============================\n")
 
     # グラフ装飾
     plt.xlabel(f"Beam centroid displacement r [m] (a={a}m)", fontsize=20)
     plt.ylabel("Transmissivity ⟨η_b⟩", fontsize=20)
-    plt.title("Circle Beam Transmissivity vs Beam Displacement", fontsize=20)
+    plt.title("Beam Transmissivity vs Beam Displacement", fontsize=20)
     plt.legend(fontsize=12)
     plt.xticks(fontsize=24)
     plt.yticks(fontsize=24)

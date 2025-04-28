@@ -15,44 +15,35 @@ a = 0.75
 G = 6.67430e-11         # Gravitational constant
 M_T = 5.972e24          # Earth's mass
 D_E = 6378e3             # Earth's radius (km)
+H_g = 0.01
 #=======================================================#
 
 #=======================================================#
 # Beam waist function
 #=======================================================#
-def beam_waist(h_s, t):
-    r_t = satellite_ground_distance(h_s, t)
+def beam_waist(h_s, H_a, theta_zen_rad):
+    L_a = satellite_ground_distance(h_s, H_a, theta_zen_rad)
     theta_d = 10e-6  # divergence angle(mrad)
-    waist = r_t * theta_d
+    waist = L_a * theta_d
     return waist
+
 
 #=======================================================#
 # The distance between satellite and ground station
-# h_s : Satellite's altitude
-# t: time
+# h_s       : Satellite's altitude
+# theta_zen : Zenith angle
 #=======================================================#
-# def satellite_ground_distance(h_s, t): 
-#     d_o = D_E + h_s # orbital radius
-#     omega = math.sqrt(G * M_T / d_o**3)
-#     d_t = math.sqrt(D_E**2 + d_o**2 - 2 * D_E * d_o * math.cos(omega * t))
-#     return d_t
-
-def satellite_ground_distance(h_s, theta_zen):
-    theta_rad = math.radians(theta_zen)
-    return h_s / math.cos(theta_rad)
-
+def satellite_ground_distance(h_s, H_g, theta_zen_rad):
+    return (h_s - H_g) / math.cos(theta_zen_rad)
 
 def main():
     # =======Definition of parameter =========== #
     h_s = 500e3 # (km)
+    theta_zen_rad = math.radians(7.5)
     #====================================#
-    # Need to be modify
-    d_o = D_E + h_s
-    omega = math.sqrt(G * M_T / d_o**3)
-    T = 2 * math.pi / omega
-    t = T * 0.03  # 周回の1/4周（90°移動）
-    #====================================#
-    waist = beam_waist(h_s, t)
+    L_a = satellite_ground_distance(h_s, H_g, theta_zen_rad)
+    print(f'LoS distance: {L_a/1e3:.1f} km')
+    waist = beam_waist(h_s, theta_zen_rad)
     print(f'Beam waist: {waist}')
 
 if __name__ == '__main__':

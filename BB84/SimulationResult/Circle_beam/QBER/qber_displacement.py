@@ -28,12 +28,14 @@ tau_zen = 0.91
     # M_T : Earth's mass
     # D_E : Earth's radius (km)
     # h_s : Satellite's altitude
+    # H_a : Receiver's a;titude
     #======================#
 a = 0.75               
 G = 6.67430e-11       
 M_T = 5.972e24      
 D_E = 6378e3       
 h_s = 500e3       
+H_a = 0.01
 
 d_o = D_E + h_s
 omega = math.sqrt(G * M_T / d_o**3)
@@ -57,24 +59,22 @@ e_dec = 0.01
 
 
 
+
 def main():
     r = np.arange(0, 7, 0.5) 
 
     theta_min = math.radians(0)
-    theta_max = math.radians(10)
+    theta_max = math.radians(70)
     theta_list = np.linspace(theta_min, theta_max, 5)
-
-    t_list = [theta / omega for theta in theta_list]
 
     plt.figure(figsize=(9, 6))
 
-    for t in t_list:
+    for theta_zen_rad in theta_list:
         # 距離 R(t)
-        R_t = satellite_ground_distance(h_s, t)
-        waist = beam_waist(h_s, t)
+        L_a = satellite_ground_distance(h_s, H_a, theta_zen_rad)
+        waist = beam_waist(h_s, H_a, theta_zen_rad)
 
-        theta_deg = omega * t * 180 / math.pi
-        eta_t = transmissivity_etat(tau_zen, theta_deg)
+        eta_t = transmissivity_etat(tau_zen, theta_zen_rad)
 
         # Transmissivity 計算
         eta_b = [transmissivity_etab(a, r_val, waist) for r_val in r]
@@ -85,13 +85,13 @@ def main():
         # QBER = qber(gamma)
         qber_values = [qber_loss(gamma_i) * 100 for gamma_i in gamma]
 
-        # QBERの値を表示
-        print(f"\n--- θ_p = {theta_deg:.2f}° (R={R_t/1e3:.2f} km, eta_t={eta_t:.4f}) ---")
+        theta_zen_deg = np.degrees(theta_zen_rad)
+
+        print(f"\n--- θ_p = {theta_zen_deg:.2f}° (R={L_a/1e3:.2f} km, eta_t={eta_t:.4f}) ---")
         for i in range(len(r)):
             print(f'Gamma: {gamma[i]:.5e}, r={r[i]:.1f} m → QBER = {qber_values[i]}')
 
-        # グラフ描画
-        plt.plot(r, qber_values, marker='o', label=fr'$\theta_{{zen}}$={theta_deg:.1f}° (R={R_t/1e3:.1f} km)')
+        plt.plot(r, qber_values, marker='o', label=fr'$\theta_{{zen}}$={theta_zen_deg:.1f}° (R={L_a/1e3:.1f} km)')
 
     plt.xlabel(f"Beam centroid displacement r (m), (a = {a}m)", fontsize=20)
     plt.ylabel(r"QBER (Quantum Bit Error Rate) [%]", fontsize=20)
