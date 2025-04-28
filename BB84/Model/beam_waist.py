@@ -31,11 +31,16 @@ def beam_waist(h_s, t):
 # h_s : Satellite's altitude
 # t: time
 #=======================================================#
-def satellite_ground_distance(h_s, t): 
-    d_o = D_E + h_s # orbital radius
-    omega = math.sqrt(G * M_T / d_o**3)
-    d_t = math.sqrt(D_E**2 + d_o**2 - 2 * D_E * d_o * math.cos(omega * t))
-    return d_t
+# def satellite_ground_distance(h_s, t): 
+#     d_o = D_E + h_s # orbital radius
+#     omega = math.sqrt(G * M_T / d_o**3)
+#     d_t = math.sqrt(D_E**2 + d_o**2 - 2 * D_E * d_o * math.cos(omega * t))
+#     return d_t
+
+def satellite_ground_distance(h_s, theta_zen):
+    theta_rad = math.radians(theta_zen)
+    return h_s / math.cos(theta_rad)
+
 
 def main():
     # =======Definition of parameter =========== #
