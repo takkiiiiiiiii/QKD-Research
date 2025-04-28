@@ -26,8 +26,8 @@ def main():
 
 
     # θ_pの範囲（ラジアン）
-    theta_min = math.radians(10)
-    theta_max = math.radians(70)
+    theta_min = math.radians(0)
+    theta_max = math.radians(60)
     theta_list = np.linspace(theta_min, theta_max, 7)  # プロットする角度数（5本）
 
     plt.figure(figsize=(9, 6))
