@@ -6,25 +6,19 @@ from atmospheric_transmissivity import transmissivity_etat
 from circle_beam_transmissivity import transmissivity_etab
 
 
-a = 0.75      # Aperture of radius (Receiver radis in meters)
-r = 5
-ratios = np.arange(0, 3.1, 0.1)
-r0 = [r * a for r in ratios]
-mag_w1 = [0.2, 1.0, 1.8]
-mag_w2 = [0.1, 0.9, 1.7]
-chi = [math.pi/3, math.pi/4, math.pi/5]
-chi_show = [3, 4, 5]
-
-
-# Complementary error function
-def erfc(x):
-    integral, _ = quad(lambda t: np.exp(-t**2), x, np.inf)
-    return (2 / np.sqrt(np.pi)) * integral
-
-
 #=======================================================#
 #                 Fading Parameters                     #
 #=======================================================#
+#=====================#
+# a : Aperture of radius (Receiver radis in meters)
+#=====================#
+a = 0.75
+
+#=====================#
+# r : Radial jitter distance
+#=====================#
+r = 5
+
 #=====================#
 # len_wave : Optical wavelength (μm)
 #=====================#
@@ -105,7 +99,6 @@ sigma_y = params["sigma_y"]
 
 
 
-
 # calculate modified beam-jitter variance approximation
 def approximate_jitter_variance(mu_x, mu_y, sigma_x, sigma_y):
     numerator = (
@@ -138,6 +131,11 @@ def mod_jitter(mu_x, mu_y, sigma_x, sigma_y):
     A_mod = A_0 * np.exp(exponent)
     return A_mod
 
+# Complementary error function for 'fading_loss()'
+def erfc(x):
+    integral, _ = quad(lambda t: np.exp(-t**2), x, np.inf)
+    return (2 / np.sqrt(np.pi)) * integral
+
 
 def fading_loss(gamma, mu_x, mu_y, sigma_x, sigma_y):
     eta_t = transmissivity_etat(tau_zen, theta_zen_rad)
@@ -146,7 +144,7 @@ def fading_loss(gamma, mu_x, mu_y, sigma_x, sigma_y):
     varphi_mod = sigma_to_variance(sigma_mod)
     gamma= eta_t * eta_b
     A_mod = mod_jitter()
-    mu = rytov**2/2 * (1+2*varphi_mod**2)
+    mu = sigma_R**2/2 * (1+2*varphi_mod**2)
     term1 = (varphi_mod**2) / (2 * (A_mod * eta_t)**(varphi_mod**2))
     term2 = gamma**(varphi_mod**2**-1)
     term3 = erfc((np.log((gamma / (A_mod * eta_t))) + mu) / (np.sqrt(2) * sigma_R))
