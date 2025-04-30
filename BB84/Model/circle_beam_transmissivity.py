@@ -15,10 +15,6 @@ import numpy as np
     #======================#
 # D_r = 1.5 #(a = 0.75m)
 a = 0.75
-# Constant
-G = 6.67430e-11         # Gravitational constant
-M_T = 5.972e24          # Earth's mass
-D_E = 6378e3             # Earth's radius (km)
 #=======================================================#
 
 # Receiver altitude(アンテナの高さ e.g., 10m)
@@ -148,11 +144,6 @@ def simulation_eta_b(h_s):
     # =======Definition of parameter =========== #
     # h_s = 500e3 # (km)
     #====================================#
-    # Need to be modify
-    d_o = D_E + h_s
-    omega = math.sqrt(G * M_T / d_o**3)
-    T = 2 * math.pi / omega
-    t = T * 0.2  # 周回の1/4周（90°移動）
     #====================================#
     displacement = [0, 0.5, 1.0, 1.5, 2.0, 2.5, 3.0]
     r = [a*d for d in displacement]
