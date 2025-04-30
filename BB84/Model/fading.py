@@ -43,9 +43,6 @@ def erfc(x):
 varphi_mod = 4.3292
 # 修正されたジッタパラメータ。ビームの有効幅と修正されたジッタ分散の比率を表す無次元パラメータ。
 
-A_0 = transmissivity_0()
-# 初期透過率。伝送路を通る光の初期透過率を示す。
-
 len_wave = 0.85  # 波長 (um)
 # Oprical wavelength. 光波長。通常、FSO（Free-Space Optics）通信などでは、使用する光の波長を指定します。ここでは0.85μmの波長を指定しています。
 
@@ -94,6 +91,9 @@ waist = beam_waist(h_s, H_a, theta_zen_rad, theta_d_rad)
 # beam waist
 # ビームの腰（ウエスト）。ビームが最も狭くなる位置を示します。
 
+A_0 = transmissivity_0(a, waist)
+# 初期透過率。伝送路を通る光の初期透過率を示す。
+
 varphi_x = waist / (2 * sigma_x)
 # Modified beam jitter parameter in x-direction.
 # x方向の修正ビームジッタパラメータ。ビームの腰とx方向のビームジッタを基に計算。
@@ -103,27 +103,41 @@ varphi_y = waist / (2 * sigma_y)
 # y方向の修正ビームジッタパラメータ。x方向と同様に計算。
 
 
+
 def mod_jitter():
     term1 = 1 / (varphi_mod ** 2)
     term2 = 1 / (2 * varphi_x ** 2)
     term3 = 1 / (2 * varphi_y ** 2)
-    term4 = 1 / (2 * sigma_x ** 2 * varphi_x ** 2)
-    term5 = 1 / (2 * sigma_y ** 2 * varphi_y ** 2)
+    term4 = mu_x**2 / (2 * sigma_x ** 2 * varphi_x ** 2)
+    term5 = mu_y**2 / (2 * sigma_y ** 2 * varphi_y ** 2)
     exponent = term1 - term2 - term3 - term4 - term5
     A_mod = A_0 * np.exp(exponent)
     return A_mod
 
 
-def fading_loss():
+def fading_loss(gamma):
     eta_t = transmissivity_etat(tau_zen, theta_zen_rad)
     eta_b = transmissivity_etab(a, r, waist)
-    eta = eta_t * eta_b
+    gamma= eta_t * eta_b
     A_mod = mod_jitter()
     mu = rytov**2/2 * (1+2*varphi_mod**2)
     term1 = (varphi_mod**2) / (2 * (A_mod * eta_t)**(varphi_mod**2))
-    term2 = eta**(varphi_mod**2) ** -1
-    term3 = erfc((np.log((eta / (A_mod * eta_t)) + mu)) / (np.sqrt(2) * sigma_R))
+    term2 = gamma**(varphi_mod**2**-1)
+    term3 = erfc((np.log((gamma / (A_mod * eta_t))) + mu) / (np.sqrt(2) * sigma_R))
     term4 = np.exp((sigma_R**2) / 2 * varphi_mod**2 * (1 + varphi_mod**2))
     
     f_eta = term1 * term2 * term3 * term4
     return f_eta
+
+
+
+def main():
+    eta_t = transmissivity_etat(tau_zen, theta_zen_rad)
+    eta_b = transmissivity_etab(a, r, waist)
+    gamma= eta_t * eta_b
+    fading_val = fading_loss(gamma)
+    print(f'Fadeing loss: {fading_val}')
+
+
+if __name__ == '__main__':
+    main() 
