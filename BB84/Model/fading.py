@@ -10,24 +10,29 @@ from circle_beam_transmissivity import transmissivity_etab
 #                 Fading Parameters                     #
 #=======================================================#
 #=====================#
-# a : Aperture of radius (Receiver radis in meters)
+# a : Aperture of radius (Receiver radis in meters) (m)
 #=====================#
 a = 0.75
 
 #=====================#
-# r : Radial jitter distance
+# r : Radial jitter distance (m)
 #=====================#
 r = 5
 
 #=====================#
 # len_wave : Optical wavelength (μm)
 #=====================#
-len_wave = 0.85  # (μm)
+len_wave = 0.85
 
 #=====================#
 # sigma_R : Rytov variance (乱流の強さの指標)
 #=====================#
 sigma_R = 1.0  # 中程度の乱流
+
+#=====================#
+# Upper atmospheric height limit (m)
+#=====================#
+H_atm = 20000 # 20km
 
 #=====================#
 # h_s : Altitude between LEO satellite and ground station (m)
@@ -45,14 +50,14 @@ H_a = 0.01  # 10 m (大気の終端高度)
 tau_zen = 0.85  # 天頂方向での大気透過率
 
 #=====================#
-# theta_zen_rad : Zenith angle (radian)
+# theta_zen_rad : Zenith angle (rad)
 #=====================#
-theta_zen_rad = math.radians(30)  # ラジアン変換
+theta_zen_rad = math.radians(30)
 
 #=====================#
-# theta_d_rad : Optical beam divergence angle (radian)
+# theta_d_rad : Optical beam divergence angle (rad)
 #=====================#
-theta_d_rad = 10e-6  # ビームの発散角
+theta_d_rad = 10e-6 
 
 #=====================#
 # waist : Beam waist radius at receiver (m)
@@ -131,12 +136,31 @@ def mod_jitter(mu_x, mu_y, sigma_x, sigma_y):
     A_mod = A_0 * np.exp(exponent)
     return A_mod
 
+
+# Compute Rytov variance σ_R^2 for atmospheric turbulence.
+def rytov_variance(lambda_m, theta_zen_rad, H_OGS, H_atm, Cn2_profile):
+    k = 2 * np.pi / lambda_m
+    sec_zenith = 1 / np.cos(theta_zen_rad)
+
+    def integrand(h):
+        return Cn2_profile(h) * (h - H_OGS)**(5/6)
+
+    integral, _ = quad(integrand, H_OGS, H_atm, limit=100, epsabs=1e-9, epsrel=1e-9)
+
+    sigma_R_squared = 2.25 * (k)**(7/6) * sec_zenith**(11/6) * integral
+
+    return sigma_R_squared
+
+def simple_cn2_profile(h):
+    """ A simple model for Cn^2(h) [m^-2/3] """
+    return 1e-14 * np.exp(-h / 1000) 
+
 # Complementary error function for 'fading_loss()'
 def erfc(x):
     integral, _ = quad(lambda t: np.exp(-t**2), x, np.inf)
     return (2 / np.sqrt(np.pi)) * integral
 
-
+# calculate the fading loss value
 def fading_loss(gamma, mu_x, mu_y, sigma_x, sigma_y):
     eta_t = transmissivity_etat(tau_zen, theta_zen_rad)
     eta_b = transmissivity_etab(a, r, waist)
