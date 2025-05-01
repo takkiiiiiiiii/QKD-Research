@@ -1,6 +1,7 @@
 import math
 import numpy as np
 from scipy.integrate import quad
+from scipy.special import erfc
 from circle_beam_transmissivity import transmissivity_0, beam_waist
 from atmospheric_transmissivity import transmissivity_etat
 from circle_beam_transmissivity import transmissivity_etab
@@ -147,33 +148,27 @@ def simple_cn2_profile(h):
     """ A simple model for Cn^2(h) [m^-2/3] """
     return 1e-14 * np.exp(-h / 1000) 
 
-# Complementary error function for 'fading_loss()'
-def erfc(x):
-    integral, _ = quad(lambda t: np.exp(-t**2), x, np.inf)
-    return (2 / np.sqrt(np.pi)) * integral
-
 # Calculate the fading loss value
 def fading_loss(gamma, mu_x, mu_y, sigma_x, sigma_y):
     eta_t = transmissivity_etat(tau_zen, theta_zen_rad)
-    eta_b = transmissivity_etab(a, r, waist)
-    sigma_mod = approximate_jitter_variance(mu_x, mu_y, sigma_x, sigma_y)
+    # eta_b = transmissivity_etab(a, r, waist)
+    # sigma_mod = approximate_jitter_variance(mu_x, mu_y, sigma_x, sigma_y)
     # varphi_mod = sigma_to_variance(sigma_mod)
     varphi_mod = 4.3292
-    gamma= eta_t * eta_b
-    print(f'eta_t: {eta_t}')
     A_mod = mod_jitter(mu_x, mu_y, sigma_x, sigma_y)
-    print(f'A_mod: {A_mod}')
     mu = sigma_R_squared/2 * (1+2*varphi_mod**2)
     term1 = (varphi_mod**2) / (2 * (A_mod * eta_t)**(varphi_mod**2))
-    print(f'term1: {term1}')
-    # term2 = gamma**(varphi_mod**2**-1)
-    term2 = gamma ** (1 / (varphi_mod**2))
-    print(f'term2: {term2}')
+    # print(f'term1: {term1}')
+    term2 = gamma ** (varphi_mod**2 - 1)
+    # term2 = gamma ** (1 / (varphi_mod**2))
+    # print(f'term2: {term2}') # 0.7630630105810166
     term3 = erfc((np.log((gamma / (A_mod * eta_t))) + mu) / (np.sqrt(2) * math.sqrt(sigma_R_squared)))
+    # print(f'(np.log((gamma / (A_mod * eta_t))) + mu) / (np.sqrt(2) * math.sqrt(sigma_R_squared)): {(np.log((gamma / (A_mod * eta_t))) + mu) / (np.sqrt(2) * math.sqrt(sigma_R_squared))}') #
     # print(f'np.log((gamma / (A_mod * eta_t))) + mu: {np.log((gamma / (A_mod * eta_t))) + mu}')
     # print(f'varphi_mod: {varphi_mod}')
     term4 = np.exp(((sigma_R_squared/2) * varphi_mod**2 * (1 + varphi_mod**2)))
     # print(f'((sigma_R_squared) * varphi_mod**2 * (1 + varphi_mod**2) / 2): {((sigma_R_squared) * varphi_mod**2 * (1 + varphi_mod**2) / 2)}')
+    # print(f'term4: {term4}')
     
     eta_f = term1 * term2 * term3 * term4
     return eta_f
@@ -194,7 +189,6 @@ def main():
     eta_b = transmissivity_etab(a, r, waist)
     gamma= eta_t * eta_b
 
-    print(f'Gamma: {gamma}')
     fading_val = fading_loss(gamma, mu_x, mu_y, sigma_x, sigma_y)
     print(f'Fading loss: {to_decimal_string(fading_val)}')
 
