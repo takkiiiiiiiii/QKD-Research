@@ -183,7 +183,7 @@ def main():
     eta_b = transmissivity_etab(a, r, waist)
     gamma= eta_t * eta_b
     fading_val = fading_loss(gamma)
-    print(f'Fadeing loss: {fading_val}')
+    print(f'Fading loss: {fading_val}')
 
 
 if __name__ == '__main__':
