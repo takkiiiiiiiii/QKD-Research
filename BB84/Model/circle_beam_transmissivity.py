@@ -18,7 +18,7 @@ a = 0.75
 #=======================================================#
 
 # Receiver altitude(アンテナの高さ e.g., 10m)
-H_g = 0.01
+H_g = 10
 
 # Divergence angle
 theta_d_rad = 20e-6
@@ -145,16 +145,16 @@ def simulation_eta_b(h_s):
     # h_s = 500e3 # (km)
     #====================================#
     #====================================#
-    displacement = [0, 0.5, 1.0, 1.5, 2.0, 2.5, 3.0]
-    r = [a*d for d in displacement]
-    waist = beam_waist(h_s, t)
-    print(f'Beam waist: {waist}')
-    print("===============================")
-    print(f'Aperture of radius (Receiver radis in meters): {a} m')
-    for displacement in r:
-        eta_b = transmissivity_etab(a, displacement, waist)
-        print(f"r = {displacement}, eta_b = {eta_b}")
-    print("===============================\n")
+    # displacement = [0, 0.5, 1.0, 1.5, 2.0, 2.5, 3.0]
+    # r = [a*d for d in displacement]
+    # waist = beam_waist(h_s, t)
+    # print(f'Beam waist: {waist}')
+    # print("===============================")
+    # print(f'Aperture of radius (Receiver radis in meters): {a} m')
+    # for displacement in r:
+    #     eta_b = transmissivity_etab(a, displacement, waist)
+    #     print(f"r = {displacement}, eta_b = {eta_b}")
+    # print("===============================\n")
     
     print("Simulation Finish !!")
 

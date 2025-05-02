@@ -16,30 +16,24 @@ from qber import qber_loss
     #=====================#
     # tau_zen   : Transmission efficiency at zenith
     #======================#
-# tau_zen = 0.91 # (Clear Sky)
+tau_zen = 0.91 # (Clear Sky)
 # tau_zen = 0.85 # (Slightly hazy)
 # tau_zen = 0.75 # (Noticeably hazy)
-tau_zen = 0.53 # (Poor visibility)
+# tau_zen = 0.53 # (Poor visibility)
 
 #=======================================================#
 # eta_b parameters (Pointing)
 #=======================================================#
     #=====================#
-    # a       : Aparture radius
-    # G       : Gravitational constant
-    # M_T     : Earth's mass
-    # D_E     : Earth's radius (km)
+    # a       : Aparture radius (m)
     # h_s     : Satellite's altitude (m)
-    # H_a     : Receiver's altitude
-    # theta_d : Divergence angle
+    # H_a     : Receiver's altitude (m)
+    # theta_d : Divergence angle (rad)
     #======================#
-a = 0.75               
-G = 6.67430e-11       
-M_T = 5.972e24      
-D_E = 6378e3       
+a = 0.75                    
 h_s = 500e3       
-H_a = 0.01
-theta_d_rad = 20e-6
+H_g = 0.01
+theta_d_rad = 10e-6
 
 
 #=======================================================#
@@ -52,7 +46,7 @@ theta_d_rad = 20e-6
     # P_AP  : After-pulsing probability
     # e_pol : Probability of the polarisation errors
     #======================#
-# n_s = 0.5
+n_s = 0.1
 # e_0 = 0.5
 # Y_0 = 1e-4
 # P_AP = 0.02
@@ -66,7 +60,7 @@ def weather_condition(tau_zen):
         weather = 'Slightly hazy'
     elif tau_zen == 0.75:
         weather = 'Noticeably hazy'
-    else:
+    elif tau_zen == 0.53:
         weather = 'Poor visibility'
     return weather
 
@@ -89,15 +83,15 @@ def main():
             theta_zen_rad = math.radians(theta_zen_deg)
 
             # 距離・ビームウエスト
-            L_a = satellite_ground_distance(h_s, H_a, theta_zen_rad)
-            waist = beam_waist(h_s, H_a, theta_zen_rad, theta_d_rad)
+            L_a = satellite_ground_distance(h_s, H_g, theta_zen_rad)
+            waist = beam_waist(h_s, H_g, theta_zen_rad, theta_d_rad)
 
             # 伝搬効率
             eta_t = transmissivity_etat(tau_zen, theta_zen_rad)
             eta_b = transmissivity_etab(a, r, waist)
 
             gamma = eta_b * eta_t
-            qber = qber_loss(gamma) * 100  # [%]
+            qber = qber_loss(gamma, n_s) * 100  # [%]
 
             qber_values.append(qber)
 

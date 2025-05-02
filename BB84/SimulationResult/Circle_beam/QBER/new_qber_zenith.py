@@ -25,15 +25,32 @@ H_a = 0.01
 theta_d_rad = 20e-6
 
 
-def qner_new_infinite(eta_b, eta_t):
-    params = get_beam_jitter_params(condition="strong", theta_d_rad=theta_d_rad)
+def get_condition_from_theta(theta_zen_rad):
+    theta_deg = abs(math.degrees(theta_zen_rad))
+    if theta_deg < 20:
+        return "weak"
+    elif theta_deg < 40:
+        return "moderate"
+    else:
+        return "strong"
+
+
+#==================================================================#
+# fading_loss : PDF of beam jitter for γ
+# qber_loss   : Transmission efficiency Bit error rate with respect to γ
+#==================================================================#
+def qner_new_infinite(theta_zen_rad, eta_b):
+    eta_t = transmissivity_etat(tau_zen, theta_zen_rad)
+    gamma_mean = eta_b * eta_t  # 中心値として使う
+    
+    params = get_beam_jitter_params(condition=condition, theta_d_rad=theta_d_rad)
     mu_x = params["mu_x"]
     mu_y = params["mu_y"]
     sigma_x = params["sigma_x"]
     sigma_y = params["sigma_y"]
 
-    def integrand(gamma):
-        return fading_loss(gamma, mu_x, mu_y, sigma_x, sigma_y) * qber_loss(gamma)
+    def integrand(gamma_mean):
+        return fading_loss(gamma_mean, mu_x, mu_y, sigma_x, sigma_y) * qber_loss(gamma_mean)
 
     result, _ = quad(integrand, 0, 1, limit=100, epsabs=1e-9, epsrel=1e-9)
     return result
@@ -65,7 +82,7 @@ def main():
         eta_t = transmissivity_etat(tau_zen, theta_zen_rad)
         eta_b = transmissivity_etab(a, r, waist)
 
-        qber = qner_new_infinite(eta_b, eta_t)
+        qber = qner_new_infinite(theta_zen_rad, eta_b)
         qber_values.append(qber)
 
     # グラフ描画
@@ -89,4 +106,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

@@ -17,27 +17,21 @@ from qber import qber_loss
     # tau_zen   : Transmission efficiency at zenith
     # theta_zen : zenith angle
     #======================#
-tau_zen = 0.85
+tau_zen = 0.91
 
 #=======================================================#
 # eta_b parameters (Pointing)
 #=======================================================#
     #=====================#
-    # a       : Aparture radius
-    # G       : Gravitational constant
-    # M_T     : Earth's mass
-    # D_E     : Earth's radius (km)
+    # a       : Aparture radius (m)
     # h_s     : Satellite's altitude (m)
-    # H_a     : Receiver's altitude
-    # theta_d : Divergence angle
+    # H_a     : Ground station altitude (m)
+    # theta_d : Divergence angle (rad)
     #======================#
-a = 0.75               
-G = 6.67430e-11       
-M_T = 5.972e24      
-D_E = 6378e3       
+a = 0.75                 
 h_s = 500e3       
-H_a = 0.01
-theta_d_rad = 20e-6
+H_g = 10
+theta_d_rad = 10e-6
 
 
 #=======================================================#
@@ -80,8 +74,8 @@ def main():
 
     for theta_zen_rad in theta_list:
         # 距離 R(t)
-        L_a = satellite_ground_distance(h_s, H_a, theta_zen_rad)
-        waist = beam_waist(h_s, H_a, theta_zen_rad)
+        L_a = satellite_ground_distance(h_s, H_g, theta_zen_rad)
+        waist = beam_waist(h_s, H_g, theta_zen_rad)
 
         eta_t = transmissivity_etat(tau_zen, theta_zen_rad)
 
