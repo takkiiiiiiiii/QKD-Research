@@ -23,17 +23,17 @@ r = 5
 #==================================================================#
 # len_wave : Optical wavelength (μm)
 #==================================================================#
-len_wave = 0.85
+len_wave = 0.85e-6
 
 #==================================================================#
 # sigma_R : Rytov variance (乱流の強さの指標)
 #==================================================================#
-sigma_R_squared = 1.0
+# sigma_R_squared = 1.0
 
 #==================================================================#
-# Upper atmospheric height limit (m)
+# altitude ground station
 #==================================================================#
-H_atm = 20000 # 20km
+H_ogs = 10 # (m)
 
 #==================================================================#
 # h_s : Altitude between LEO satellite and ground station (m)
@@ -53,12 +53,25 @@ tau_zen = 0.85  # 天頂方向での大気透過率
 #==================================================================#
 # theta_zen_rad : Zenith angle (rad)
 #==================================================================#
-theta_zen_rad = math.radians(30)
+theta_zen_rad = math.radians(31.45)
 
 #==================================================================#
 # theta_d_rad : Optical beam divergence angle (rad)
 #==================================================================#
 theta_d_rad = 10e-6 
+
+#==================================================================#
+# v_wind: wind_speed
+#==================================================================#
+v_wind = 21 
+
+
+#==================================================================#
+# the maximum vertical altitude of atmosphere scaled from maximum 
+# slant path h_slant,max over the atmosphere at minimum zenith angle
+# atomospheric altitude
+#==================================================================#
+H_atm = 20000*math.cos(theta_zen_rad) 
 
 #==================================================================#
 # waist : Beam waist radius at receiver (m)
@@ -131,8 +144,8 @@ def mod_jitter(mu_x, mu_y, sigma_x, sigma_y):
 
 
 # Compute Rytov variance σ_R^2 for atmospheric turbulence.
-def rytov_variance(lambda_m, theta_zen_rad, H_OGS, H_atm, Cn2_profile):
-    k = 2 * np.pi / lambda_m
+def rytov_variance(len_wave, theta_zen_rad, H_OGS, H_atm, Cn2_profile):
+    k = 2 * np.pi / len_wave
     sec_zenith = 1 / np.cos(theta_zen_rad)
 
     def integrand(h):
@@ -144,32 +157,37 @@ def rytov_variance(lambda_m, theta_zen_rad, H_OGS, H_atm, Cn2_profile):
 
     return sigma_R_squared
 
-def simple_cn2_profile(h):
-    """ A simple model for Cn^2(h) [m^-2/3] """
-    return 1e-14 * np.exp(-h / 1000) 
+# def simple_cn2_profile(h):
+#     """ A simple model for Cn^2(h) [m^-2/3] """
+#     return 1e-14 * np.exp(-h / 1000) 
+
+def cn2_profile(h, v_wind=21, Cn2_0=1e-15):
+    """
+    More realistic Cn^2(h) profile based on empirical model.
+    Parameters:
+        h : altitude [m]
+        v_wind : wind speed (m/s)
+        Cn2_0 : Cn^2 at ground level (m^-2/3)
+    Returns:
+        Cn^2(h) in m^-2/3
+    """
+    term1 = 0.00594 * (v_wind / 27)**2 * (1e-5 * h)**10 * np.exp(-h / 1000)
+    term2 = 2.7e-16 * np.exp(-h / 1500)
+    term3 = Cn2_0 * np.exp(-h / 100)
+    return term1 + term2 + term3
+
 
 # Calculate the fading loss value
 def fading_loss(gamma, mu_x, mu_y, sigma_x, sigma_y):
     eta_t = transmissivity_etat(tau_zen, theta_zen_rad)
-    # eta_b = transmissivity_etab(a, r, waist)
-    # sigma_mod = approximate_jitter_variance(mu_x, mu_y, sigma_x, sigma_y)
-    # varphi_mod = sigma_to_variance(sigma_mod)
+    sigma_R_squared = rytov_variance(len_wave, theta_zen_rad, H_ogs, H_atm, cn2_profile)
     varphi_mod = 4.3292
     A_mod = mod_jitter(mu_x, mu_y, sigma_x, sigma_y)
     mu = sigma_R_squared/2 * (1+2*varphi_mod**2)
     term1 = (varphi_mod**2) / (2 * (A_mod * eta_t)**(varphi_mod**2))
-    # print(f'term1: {term1}')
     term2 = gamma ** (varphi_mod**2 - 1)
-    # term2 = gamma ** (1 / (varphi_mod**2))
-    # print(f'term2: {term2}') # 0.7630630105810166
     term3 = erfc((np.log((gamma / (A_mod * eta_t))) + mu) / (np.sqrt(2) * math.sqrt(sigma_R_squared)))
-    # print(f'(np.log((gamma / (A_mod * eta_t))) + mu) / (np.sqrt(2) * math.sqrt(sigma_R_squared)): {(np.log((gamma / (A_mod * eta_t))) + mu) / (np.sqrt(2) * math.sqrt(sigma_R_squared))}') #
-    # print(f'np.log((gamma / (A_mod * eta_t))) + mu: {np.log((gamma / (A_mod * eta_t))) + mu}')
-    # print(f'varphi_mod: {varphi_mod}')
     term4 = np.exp(((sigma_R_squared/2) * varphi_mod**2 * (1 + varphi_mod**2)))
-    # print(f'((sigma_R_squared) * varphi_mod**2 * (1 + varphi_mod**2) / 2): {((sigma_R_squared) * varphi_mod**2 * (1 + varphi_mod**2) / 2)}')
-    # print(f'term4: {term4}')
-    
     eta_f = term1 * term2 * term3 * term4
     return eta_f
 
@@ -180,17 +198,20 @@ def to_decimal_string(x, precision=100):
 
 def main():
     # conditon: strong, moderate or weak
-    params = get_beam_jitter_params(condition="strong", theta_d_rad=theta_d_rad)
-    mu_x = params["mu_x"]
-    mu_y = params["mu_y"]
-    sigma_x = params["sigma_x"]
-    sigma_y = params["sigma_y"]
-    eta_t = transmissivity_etat(tau_zen, theta_zen_rad)
-    eta_b = transmissivity_etab(a, r, waist)
-    gamma= eta_t * eta_b
+    # params = get_beam_jitter_params(condition="strong", theta_d_rad=theta_d_rad)
+    # mu_x = params["mu_x"]
+    # mu_y = params["mu_y"]
+    # sigma_x = params["sigma_x"]
+    # sigma_y = params["sigma_y"]
+    # eta_t = transmissivity_etat(tau_zen, theta_zen_rad)
+    # eta_b = transmissivity_etab(a, r, waist)
+    # gamma= eta_t * eta_b
 
-    fading_val = fading_loss(gamma, mu_x, mu_y, sigma_x, sigma_y)
-    print(f'Fading loss: {to_decimal_string(fading_val)}')
+    # fading_val = fading_loss(gamma, mu_x, mu_y, sigma_x, sigma_y)
+    # print(f'Fading loss: {to_decimal_string(fading_val)}')
+    sigma_R_squared = rytov_variance(len_wave, theta_zen_rad, H_ogs, H_atm, simple_cn2_profile)
+    print(f'H_atm: {H_atm:.3f} m')
+    print(fr'$\sigma_{{R}}^2$: {sigma_R_squared}')
 
 
 if __name__ == '__main__':
