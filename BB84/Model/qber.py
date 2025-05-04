@@ -4,10 +4,7 @@ import numpy as np
 from circle_beam_transmissivity import transmissivity_etab, beam_waist
 from atmospheric_transmissivity import transmissivity_etat
 
-a = 0.75                    
-h_s = 500e3       
-H_g = 10
-theta_d_rad = 10e-6
+
 
 #=======================================================#
 # QBER parameters
@@ -37,6 +34,10 @@ def to_decimal_string(x, precision=120):
     return format(x, f'.{precision}f').rstrip('0').rstrip('.')
 
 def main():
+    a = 0.75                    
+    h_s = 500e3       
+    H_g = 10
+    theta_d_rad = 10e-6
     n_s = 0.1
     r = 4
     tau_zen = 0.91

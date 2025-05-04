@@ -14,14 +14,14 @@ import numpy as np
     # a      : Aperture of radius (Receiver radis in meters)
     #======================#
 # D_r = 1.5 #(a = 0.75m)
-a = 0.75
+# a = 0.75
 #=======================================================#
 
 # Receiver altitude(アンテナの高さ e.g., 10m)
-H_g = 10
+# H_g = 10
 
 # Divergence angle
-theta_d_rad = 20e-6
+# theta_d_rad = 20e-6
 
 #=======================================================#
 # Transmissivity nb(eta_b)

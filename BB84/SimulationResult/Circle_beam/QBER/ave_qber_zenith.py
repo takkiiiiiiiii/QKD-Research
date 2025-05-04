@@ -31,7 +31,7 @@ a = 0.75
 #==================================================================#
 # n_s : average number of photon
 #==================================================================#
-n_s = 0.5
+n_s = 0.8
 
 #==================================================================#
 # len_wave : Optical wavelength (μm)
@@ -167,7 +167,7 @@ def rytov_variance(len_wave, theta_zen_rad, H_OGS, H_atm, Cn2_profile):
 #     """ A simple model for Cn^2(h) [m^-2/3] """
 #     return 1e-14 * np.exp(-h / 1000) 
 
-def cn2_profile(h, v_wind=21, Cn2_0=1e-17):
+def cn2_profile(h, v_wind=21, Cn2_0=1e-15):
     term1 = 0.00594 * (v_wind / 27)**2 * (1e-5 * h)**10 * np.exp(-h / 1000)
     term2 = 2.7e-16 * np.exp(-h / 1500)
     term3 = Cn2_0 * np.exp(-h / 100)
@@ -253,7 +253,6 @@ def weather_condition(tau_zen):
 #     plt.show()
 
 def main():
-
     tau_zen_list = [0.91, 0.85, 0.75, 0.65]
     theta_zen_deg_list = np.linspace(-60, 60, 200)
 
@@ -268,14 +267,14 @@ def main():
 
             waist = beam_waist(h_s, H_ogs, theta_zen_rad, theta_d_rad)
             qber = qner_new_infinite(theta_zen_rad, H_atm, waist, tau_zen)
-            qber_values.append(qber)
+            qber_values.append(qber*100)
 
         label = weather_condition(tau_zen) + f" (τ = {tau_zen})"
         plt.plot(theta_zen_deg_list, qber_values, label=label)
 
     # グラフ装飾
     plt.xlabel(r"Zenith angle $\theta_{\mathrm{zen}}$ [deg]", fontsize=20)
-    plt.ylabel(r"QBER (Quantum Bit Error Rate)", fontsize=20)
+    plt.ylabel(r"QBER (Quantum Bit Error Rate) [%]", fontsize=20)
     plt.title("QBER vs Zenith Angle for Various Weather Conditions", fontsize=20)
     plt.grid(True)
     plt.legend(fontsize=12)
