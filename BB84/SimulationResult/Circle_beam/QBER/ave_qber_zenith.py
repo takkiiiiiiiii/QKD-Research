@@ -24,9 +24,9 @@ from qber import qber_loss
 a = 0.75
 
 #==================================================================#
-# r : Radial jitter distance (m)
+# varphi_mod : Beam width to jitter variance ratio 
 #==================================================================#
-# r = 5
+varphi_mod = 4.3292
 
 #==================================================================#
 # n_s : average number of photon
@@ -85,9 +85,10 @@ v_wind = 21
 # waist = beam_waist(h_s, H_a, theta_zen_rad, theta_d_rad)
 
 
+
+
 def get_beam_jitter_params(condition, theta_d_rad):
     theta_d_half_rad = theta_d_rad / 2
-    # theta_d_half_rad = 16.5e-6
 
     jitter_params = {
         "weak": {
@@ -133,12 +134,11 @@ def sigma_to_variance(sigma, waist):
     return variance
 
 # calculate the modified fracton of collected power over the receiving aparture when there is no pointing error
-def mod_jitter(mu_x, mu_y, sigma_x, sigma_y, waist):
+def mod_jitter(mu_x, mu_y, sigma_x, sigma_y, waist, varphi_mod):
     A_0 = transmissivity_0(a, waist)
     varphi_x = sigma_to_variance(sigma_x, waist)
     varphi_y = sigma_to_variance(sigma_y, waist)
     # sigma_mod = approximate_jitter_variance(mu_x, mu_y, sigma_x, sigma_y)
-    varphi_mod = 4.3292
     term1 = 1 / (varphi_mod ** 2)
     term2 = 1 / (2 * varphi_x ** 2)
     term3 = 1 / (2 * varphi_y ** 2)
@@ -175,11 +175,10 @@ def cn2_profile(h, v_wind=21, Cn2_0=1e-15):
 
 
 # Calculate the fading loss value
-def fading_loss(gamma, mu_x, mu_y, sigma_x, sigma_y, theta_zen_rad, H_atm, waist, tau_zen):
+def fading_loss(gamma, mu_x, mu_y, sigma_x, sigma_y, theta_zen_rad, H_atm, waist, tau_zen, varphi_mod):
     eta_t = transmissivity_etat(tau_zen, theta_zen_rad)
     sigma_R_squared = rytov_variance(len_wave, theta_zen_rad, H_ogs, H_atm, cn2_profile)
-    varphi_mod = 4.3292
-    A_mod = mod_jitter(mu_x, mu_y, sigma_x, sigma_y, waist)
+    A_mod = mod_jitter(mu_x, mu_y, sigma_x, sigma_y, waist, varphi_mod)
     mu = sigma_R_squared/2 * (1+2*varphi_mod**2)
     term1 = (varphi_mod**2) / (2 * (A_mod * eta_t)**(varphi_mod**2))
     term2 = gamma ** (varphi_mod**2 - 1)
@@ -193,7 +192,7 @@ def fading_loss(gamma, mu_x, mu_y, sigma_x, sigma_y, theta_zen_rad, H_atm, waist
 # qber_loss   : Transmission efficiency Bit error rate with respect to γ
 # h_s         : Satellite's altitude (m)
 #==================================================================#
-def qner_new_infinite(theta_zen_rad, H_atm, waist, tau_zen):
+def qner_new_infinite(theta_zen_rad, H_atm, waist, tau_zen, varphi_mod):
     
     params = get_beam_jitter_params(condition='weak', theta_d_rad=theta_d_rad)
     mu_x = params["mu_x"]
@@ -202,7 +201,7 @@ def qner_new_infinite(theta_zen_rad, H_atm, waist, tau_zen):
     sigma_y = params["sigma_y"]
 
     def integrand(gamma_mean):
-        return fading_loss(gamma_mean, mu_x, mu_y, sigma_x, sigma_y, theta_zen_rad, H_atm, waist, tau_zen) * qber_loss(gamma_mean, n_s)
+        return fading_loss(gamma_mean, mu_x, mu_y, sigma_x, sigma_y, theta_zen_rad, H_atm, waist, tau_zen, varphi_mod) * qber_loss(gamma_mean, n_s)
 
     result, _ = quad(integrand, 0, 1, limit=100, epsabs=1e-9, epsrel=1e-9)
     return result
@@ -219,39 +218,6 @@ def weather_condition(tau_zen):
         return 'Poor visibility'
 
 
-# def main():
-#     theta_zen_deg_list = np.linspace(-60, 60, 200)
-#     qber_values = []
-
-#     for theta_zen_deg in theta_zen_deg_list:
-#         theta_zen_rad = math.radians(theta_zen_deg)
-#         H_atm = 20000*math.cos(theta_zen_rad) 
-
-#         # チャネルパラメータ計算
-#         # L_a = satellite_ground_distance(h_s, H_ogs, theta_zen_rad)
-#         waist = beam_waist(h_s, H_ogs, theta_zen_rad, theta_d_rad)
-
-#         qber = qner_new_infinite(theta_zen_rad, H_atm, waist)
-#         qber_values.append(qber)
-
-#     # グラフ描画
-#     weather = weather_condition(tau_zen)
-#     plt.figure(figsize=(10, 6))
-#     plt.plot(theta_zen_deg_list, qber_values)
-#     plt.xlabel(r"Zenith angle $\theta_{\mathrm{zen}}$ [deg]", fontsize=18)
-#     plt.ylabel(r"QBER (Quantum Bit Error Rate)", fontsize=18)
-#     plt.title(fr"QBER vs Zenith Angle ({weather})", fontsize=20)
-#     plt.grid(True)
-#     plt.legend(fontsize=14)
-#     plt.xticks(fontsize=14)
-#     plt.yticks(fontsize=14)
-#     plt.tight_layout()
-
-#     output_path = os.path.join(os.path.dirname(__file__), f'qber_vs_zenith_{weather}.png')
-#     plt.savefig(output_path)
-#     print(f"✅ Saved as: {output_path}")
-#     plt.show()
-
 def main():
     tau_zen_list = [0.91, 0.85, 0.75, 0.65]
     theta_zen_deg_list = np.linspace(-60, 60, 200)
@@ -266,7 +232,7 @@ def main():
             H_atm = 20000 * math.cos(theta_zen_rad)
 
             waist = beam_waist(h_s, H_ogs, theta_zen_rad, theta_d_rad)
-            qber = qner_new_infinite(theta_zen_rad, H_atm, waist, tau_zen)
+            qber = qner_new_infinite(theta_zen_rad, H_atm, waist, tau_zen, varphi_mod)
             qber_values.append(qber*100)
 
         label = weather_condition(tau_zen) + f" (τ = {tau_zen})"
