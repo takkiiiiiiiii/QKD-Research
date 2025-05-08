@@ -167,6 +167,7 @@ def rytov_variance(len_wave, theta_zen_rad, H_OGS, H_atm, Cn2_profile):
 #     """ A simple model for Cn^2(h) [m^-2/3] """
 #     return 1e-14 * np.exp(-h / 1000) 
 
+
 def cn2_profile(h, v_wind=21, Cn2_0=1e-15):
     term1 = 0.00594 * (v_wind / 27)**2 * (1e-5 * h)**10 * np.exp(-h / 1000)
     term2 = 2.7e-16 * np.exp(-h / 1500)
@@ -203,7 +204,7 @@ def qner_new_infinite(theta_zen_rad, H_atm, waist, tau_zen, varphi_mod):
     def integrand(gamma_mean):
         return fading_loss(gamma_mean, mu_x, mu_y, sigma_x, sigma_y, theta_zen_rad, H_atm, waist, tau_zen, varphi_mod) * qber_loss(gamma_mean, n_s)
 
-    result, _ = quad(integrand, 0, 1, limit=100, epsabs=1e-9, epsrel=1e-9)
+    result, _ = quad(integrand, 0, np.inf, limit=100, epsabs=1e-9, epsrel=1e-9)
     return result
 
 
@@ -254,9 +255,5 @@ def main():
     plt.show()
 
 
-
 if __name__ == "__main__":
     main()
-
-
-
