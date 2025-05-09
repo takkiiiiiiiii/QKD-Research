@@ -15,7 +15,7 @@ from atmospheric_transmissivity import transmissivity_etat
     # Y_0   : the background rate which includes the detector dark count and other background contributions
     # P_pa  : After-pulsing probability
     # e_pol : Probability of the polarisation errors
-    #======================#
+    #======================#i
 e_0 = 0.5
 Y_0 = 1e-4
 P_AP = 0.02
