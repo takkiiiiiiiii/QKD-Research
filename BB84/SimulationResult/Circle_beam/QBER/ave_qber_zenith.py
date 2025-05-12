@@ -88,26 +88,6 @@ def approximate_jitter_variance(mu_x, mu_y, sigma_x, sigma_y):
     sigma_mod_value = (numerator / 2) ** (1/3)
     return sigma_mod_value
 
-# calculate the ratios between the equivalent beam-width and (modified) beam-jitter variances
-def sigma_to_variance(sigma, w_L):
-    variance = w_L/2*sigma
-    return variance
-
-
-# calculate the modified fracton of collected power over the receiving aparture when there is no pointing error
-def mod_jitter(mu_x, mu_y, sigma_x, sigma_y, w_L, varphi_mod):
-    A_0 = transmissivity_0(a, w_L)
-    varphi_x = sigma_to_variance(sigma_x, w_L)
-    varphi_y = sigma_to_variance(sigma_y, w_L)
-    # sigma_mod = approximate_jitter_variance(mu_x, mu_y, sigma_x, sigma_y)
-    term1 = 1 / (varphi_mod ** 2)
-    term2 = 1 / (2 * varphi_x ** 2)
-    term3 = 1 / (2 * varphi_y ** 2)
-    term4 = mu_x**2 / (2 * sigma_x ** 2 * varphi_x ** 2)
-    term5 = mu_y**2 / (2 * sigma_y ** 2 * varphi_y ** 2)
-    exponent = term1 - term2 - term3 - term4 - term5
-    A_mod = A_0 * np.exp(exponent)
-    return A_mod
 
 
 def satellite_ground_distance(h_s, H_g, theta_zen_rad):
@@ -140,10 +120,10 @@ def cn2_profile(h, v_wind=21, Cn2_0=1e-13):
 
 
 # Calculate the fading loss value
-def fading_loss(gamma, mu_x, mu_y, sigma_x, sigma_y, theta_zen_rad, H_atm, w_L, tau_zen, varphi_mod):
+def fading_loss(gamma, mu_x, mu_y, sigma_x, sigma_y, theta_zen_rad, H_atm, w_Leq, tau_zen, varphi_mod):
     eta_t = transmissivity_etat(tau_zen, theta_zen_rad)
     sigma_R_squared = rytov_variance(lambda_, theta_zen_rad, H_g, H_atm, cn2_profile)
-    A_mod = mod_jitter(mu_x, mu_y, sigma_x, sigma_y, w_L, varphi_mod)
+    A_mod = mod_jitter(mu_x, mu_y, sigma_x, sigma_y, w_Leq, varphi_mod)
     mu = sigma_R_squared/2 * (1+2*varphi_mod**2)
     term1 = (varphi_mod**2) / (2 * (A_mod * eta_t)**(varphi_mod**2))
     term2 = gamma ** (varphi_mod**2 - 1)
@@ -151,33 +131,6 @@ def fading_loss(gamma, mu_x, mu_y, sigma_x, sigma_y, theta_zen_rad, H_atm, w_L, 
     term4 = np.exp(((sigma_R_squared/2) * varphi_mod**2 * (1 + varphi_mod**2)))
     eta_f = term1 * term2 * term3 * term4
     return eta_f
-
-#==================================================================#
-# fading_loss : PDF of beam jitter for γ
-# qber_loss   : Transmission efficiency Bit error rate with respect to γ
-# h_s         : Satellite's altitude (m)
-#==================================================================#
-def qner_new_infinite(theta_zen_rad, H_atm, w_L, tau_zen, varphi_mod):
-    # beam propagation distance
-    L = satellite_ground_distance(h_s, H_g, theta_zen_rad)
-    # mu_y = 0
-    # mu_x = 0
-    # angle_sigma_x = 3e-6
-    # angle_sigma_y = 3e-6
-    sigma_x = angle_sigma_x * L
-    sigma_y = angle_sigma_y * L
-    L = satellite_ground_distance(h_s, H_g, theta_zen_rad)
-    w_L = compute_w_L(lambda_, theta_d_half_rad, L, H_atm, H_g, theta_zen_rad)
-    sigma_mod = compute_sigma_mod(mu_x, mu_y, sigma_x, sigma_y)
-    w_Leq_squared = equivalent_beam_width_squared(a, w_L)
-    varphi_mod = varphi_mod(w_Leq_squared, sigma_mod)
-    
-
-    def integrand(gamma_mean):
-        return fading_loss(gamma_mean, mu_x, mu_y, sigma_x, sigma_y, theta_zen_rad, H_atm, w_L, tau_zen, varphi_mod) * qber_loss(gamma_mean, n_s)
-
-    result, _ = quad(integrand, 0, np.inf, limit=100, epsabs=1e-9, epsrel=1e-9)
-    return result
 
 
 def weather_condition(tau_zen):
@@ -201,7 +154,6 @@ def compute_w_L(lambda_, theta_d_half_rad, L, H_atm, H_OGS, theta_zen_rad):
     w_0 = lambda_ / (math.pi * theta_d_half_rad)
 
     W = w_0 * math.sqrt(1 + (2 * L) / (k * w_0))
-
 
     def integrand(h):
         return Cn_squared(h) * ((h - H_OGS) / (H_atm - H_OGS))**(5/3)
@@ -231,17 +183,17 @@ def approximate_jitter_variance(mu_x, mu_y, sigma_x, sigma_y):
     return sigma_mod_value
 
 # calculate the ratios between the equivalent beam-width and (modified) beam-jitter variances
-def sigma_to_variance(sigma, w_L):
-    variance = w_L/2*sigma
+def sigma_to_variance(sigma, w_Leq):
+    variance = w_Leq/2*sigma
     return variance
 
 # calculate the modified fracton of collected power over the receiving aparture when there is no pointing error
-def mod_jitter(mu_x, mu_y, sigma_x, sigma_y, w_L):
-    A_0 = transmissivity_0(a, w_L)
-    varphi_x = sigma_to_variance(sigma_x, w_L)
-    varphi_y = sigma_to_variance(sigma_y, w_L)
+def mod_jitter(mu_x, mu_y, sigma_x, sigma_y, w_Leq):
+    A_0 = transmissivity_0(a, w_Leq)
+    varphi_x = sigma_to_variance(sigma_x, w_Leq)
+    varphi_y = sigma_to_variance(sigma_y, w_Leq)
     sigma_mod = approximate_jitter_variance(mu_x, mu_y, sigma_x, sigma_y)
-    varphi_mod = sigma_to_variance(sigma_mod, w_L)
+    varphi_mod = sigma_to_variance(sigma_mod, w_Leq)
     term1 = 1 / (varphi_mod ** 2)
     term2 = 1 / (2 * varphi_x ** 2)
     term3 = 1 / (2 * varphi_y ** 2)
@@ -286,24 +238,24 @@ def compute_sigma_mod(mu_x, mu_y, sigma_x, sigma_y):
     return sigma_mod
 
 # Equivalent Beam Width
-def equivalent_beam_width_squared(a, w_L):
-    nu = (math.sqrt(math.pi) * a) / (math.sqrt(2) * w_L)
+def equivalent_beam_width_squared(a, w_Leq):
+    nu = (math.sqrt(math.pi) * a) / (math.sqrt(2) * w_Leq)
     numerator = math.sqrt(math.pi) * erf(nu)
     denominator = 2 * nu * math.exp(-nu**2)
-    w_Leq_squared = w_L**2 * (numerator / denominator)
+    w_Leq_squared = w_Leq**2 * (numerator / denominator)
     return w_Leq_squared
 
 # Calculate varphi_mod
-def varphi_mod(w_Leq_squared, sigma_mod):
+def compute_varphi_mod(w_Leq_squared, sigma_mod):
     w_Leq = math.sqrt(w_Leq_squared)
     return w_Leq / (2 * sigma_mod)
 
 # Calculate the fading loss value
-def fading_loss(gamma, mu_x, mu_y, sigma_x, sigma_y, theta_zen_rad, H_atm, w_L, tau_zen, varphi_mod):
+def fading_loss(gamma, mu_x, mu_y, sigma_x, sigma_y, theta_zen_rad, H_atm, w_Leq, tau_zen, varphi_mod):
     eta_t = transmissivity_etat(tau_zen, theta_zen_rad)
     sigma_R_squared = rytov_variance(lambda_, theta_zen_rad, H_g, H_atm, cn2_profile)
     varphi_mod = 4.3292
-    A_mod = mod_jitter(mu_x, mu_y, sigma_x, sigma_y, w_L)
+    A_mod = mod_jitter(mu_x, mu_y, sigma_x, sigma_y, w_Leq)
     mu = sigma_R_squared/2 * (1+2*varphi_mod**2)
     term1 = (varphi_mod**2) / (2 * (A_mod * eta_t)**(varphi_mod**2))
     term2 = gamma ** (varphi_mod**2 - 1)
@@ -312,10 +264,31 @@ def fading_loss(gamma, mu_x, mu_y, sigma_x, sigma_y, theta_zen_rad, H_atm, w_L, 
     eta_f = term1 * term2 * term3 * term4
     return eta_f
 
-def to_decimal_string(x, precision=100):
-    if x == 0:
-        return "0." + "0" * precision
-    return format(x, f'.{precision}f').rstrip('0').rstrip('.')
+#==================================================================#
+# fading_loss : PDF of beam jitter for γ
+# qber_loss   : Transmission efficiency Bit error rate with respect to γ
+# h_s         : Satellite's altitude (m)
+#==================================================================#
+def qner_new_infinite(theta_zen_rad, H_atm, w_L, tau_zen, LoS):
+    # beam propagation distance
+    # mu_y = 0
+    # mu_x = 0
+    # angle_sigma_x = 3e-6
+    # angle_sigma_y = 3e-6
+    sigma_x = angle_sigma_x * LoS
+    sigma_y = angle_sigma_y * LoS
+
+    sigma_mod = compute_sigma_mod(mu_x, mu_y, sigma_x, sigma_y)
+    w_Leq_squared = equivalent_beam_width_squared(a, w_L)
+    varphi_mod = compute_varphi_mod(w_Leq_squared, sigma_mod)
+    w_Leq = math.sqrt(w_Leq_squared)
+    
+
+    def integrand(gamma_mean):
+        return fading_loss(gamma_mean, mu_x, mu_y, sigma_x, sigma_y, theta_zen_rad, H_atm, w_Leq, tau_zen, varphi_mod) * qber_loss(gamma_mean, n_s)
+
+    result, _ = quad(integrand, 0, np.inf, limit=100, epsabs=1e-9, epsrel=1e-9)
+    return result
 
 
 def main():
@@ -330,9 +303,10 @@ def main():
         for theta_zen_deg in theta_zen_deg_list:
             theta_zen_rad = math.radians(theta_zen_deg)
             H_atm = 20000
-            L = satellite_ground_distance(h_s, H_g, theta_zen_rad)
-            w_L = compute_w_L(lambda_, theta_d_half_rad, L, H_atm, H_g, theta_zen_rad)
-            qber = qner_new_infinite(theta_zen_rad, H_atm, w_L, tau_zen, varphi_mod)
+            LoS = satellite_ground_distance(h_s, H_g, theta_zen_rad)
+            w_L = compute_w_L(lambda_, theta_d_half_rad, LoS, H_atm, H_g, theta_zen_rad)
+
+            qber = qner_new_infinite(theta_zen_rad, H_atm, w_L, tau_zen, LoS)
             qber_values.append(qber*100)
 
         label = weather_condition(tau_zen) + f" (τ = {tau_zen})"
