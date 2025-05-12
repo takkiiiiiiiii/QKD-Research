@@ -127,7 +127,9 @@ def compute_w_L(lambda_, theta_d_half_rad, L, H_atm, H_OGS, theta_zen_rad):
     def integrand(h):
         return Cn_squared(h) * ((h - H_OGS) / (H_atm - H_OGS))**(5/3)
 
+    # integral_result, _ = quad(integrand, H_OGS, H_atm)
     integral_result, _ = quad(integrand, H_OGS, H_atm)
+
 
     T = 4.35 * ((2 * L) / (k * W**2))**(5/6) * \
         k**(7/6) * (H_atm - H_OGS)**(5/6) * \
@@ -220,7 +222,7 @@ def varphi_mod(w_Leq_squared, sigma_mod):
 # Calculate the fading loss value
 def fading_loss(gamma, mu_x, mu_y, sigma_x, sigma_y, theta_zen_rad, H_atm, waist):
     eta_t = transmissivity_etat(tau_zen, theta_zen_rad)
-    sigma_R_squared = rytov_variance(len_wave, theta_zen_rad, H_ogs, H_atm, cn2_profile)
+    sigma_R_squared = rytov_variance(lambda_, theta_zen_rad, H_g, H_atm, cn2_profile)
     varphi_mod = 4.3292
     A_mod = mod_jitter(mu_x, mu_y, sigma_x, sigma_y, waist)
     mu = sigma_R_squared/2 * (1+2*varphi_mod**2)
