@@ -255,10 +255,12 @@ def main():
 
     varphi = varphi_mod(w_Leq_squared, sigma_mod)
 
-    # Output result
-    print(f"sigma_mod: {sigma_mod:.3e} [m]")
-    print(f"w_Leq_squared: {w_Leq_squared:.3e} [m^2]")
-    print(f"varphi_mod: {varphi:.3f}")
+    print(f"Aparture radius:                  {a} [m]")
+    print(f"Receiver's Beam footprint radius: {w_L:.3e} [m]")
+    print(f"Equivalent Beam width:            {math.sqrt(w_Leq_squared):.3e} [m]")
+    print(f"sigma_mod:                        {sigma_mod:.3e} [m]")
+    print(f"w_Leq_squared:                    {w_Leq_squared:.3e} [m^2]")
+    print(f"varphi_mod:                       {varphi:.3f}")
 
 
 if __name__ == '__main__':
