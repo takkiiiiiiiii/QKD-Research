@@ -113,7 +113,7 @@ theta_d_half_rad = theta_d_rad / 2
 #     return jitter_params[condition]
 
 def Cn_squared(h):
-    return 1e-14
+    return 1e-13
 
 # Beam footprint radius at receiver including turbulence
 def compute_w_L(lambda_, theta_d_half_rad, L, H_atm, H_OGS, theta_zen_rad):
