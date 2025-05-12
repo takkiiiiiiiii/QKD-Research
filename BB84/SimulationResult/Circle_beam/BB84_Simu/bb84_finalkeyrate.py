@@ -202,7 +202,7 @@ def calculate_pulse_rate(n_s, num_qubits):
 
 
 def main():
-    num_samples = 1000
+    num_samples = 10
     #==================================================================#
     # Altitude between LEO satellite and ground station (m)
     #==================================================================#
@@ -228,9 +228,8 @@ def main():
     sifting_coefficient = 0.5
     p_estimation = 0.9
 
-
     tau_zen_list = [0.91, 0.85, 0.75, 0.65]
-    theta_zen_deg_list = np.linspace(-60, 60, 200)
+    theta_zen_deg_list = np.linspace(-60, 60, 13)
     num_qubits = 29
     pulse_rate = calculate_pulse_rate(n_s, num_qubits)
     print(f'Pulse Rate: {pulse_rate} (pulse/sec)')
@@ -240,7 +239,7 @@ def main():
 
         for theta_zen_deg in theta_zen_deg_list:
             theta_zen_rad = math.radians(theta_zen_deg)
-            H_atm = 20000 * math.cos(theta_zen_rad)
+            H_atm = 20000
             waist = beam_waist(H_s, H_g, theta_zen_rad, theta_d_rad)
             prob_error = qner_new_infinite(theta_zen_rad, H_atm, waist, tau_zen, varphi_mod, n_s, H_s, H_g)
 

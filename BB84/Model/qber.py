@@ -35,7 +35,7 @@ def to_decimal_string(x, precision=120):
 
 def main():
     a = 0.75                    
-    h_s = 500e3       
+    h_s = 550e3       
     H_g = 10
     theta_d_rad = 10e-6
     n_s = 0.1
