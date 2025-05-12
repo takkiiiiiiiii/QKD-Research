@@ -114,8 +114,8 @@ def to_decimal_string(x, precision=70):
 #=======================================================#
 # Beam waist function
 #=======================================================#
-def beam_waist(h_s, H_a, theta_zen_rad, theta_d_rad):
-    L_a = satellite_ground_distance(h_s, H_a, theta_zen_rad)
+def beam_waist(h_s, H_g, theta_zen_rad, theta_d_rad):
+    L_a = satellite_ground_distance(h_s, H_g, theta_zen_rad)
     waist = L_a * theta_d_rad
     return waist
 
@@ -157,11 +157,3 @@ def simulation_eta_b(h_s):
     # print("===============================\n")
     
     print("Simulation Finish !!")
-
-
-def main():
-    h_s = 500e3
-    simulation_eta_b(h_s)
-
-if __name__ == '__main__':
-    main()

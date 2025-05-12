@@ -24,7 +24,7 @@ r = 5
 # #==================================================================#
 # # len_wave : Optical wavelength (μm)
 # #==================================================================#
-len_wave = 0.85e-6
+lambda_ = 0.85e-6
 
 # #==================================================================#
 # # altitude ground station
@@ -81,36 +81,61 @@ H_atm = 20000
 # sigma_x = 3e-6
 # sigma_y = 3e-6
 
+theta_d_half_rad = theta_d_rad / 2
+# def get_beam_jitter_params(condition, theta_d_rad, L):
+#     theta_d_half_rad = theta_d_rad / 2
+#     # theta_d_half_rad = 16.5e-6
 
-def get_beam_jitter_params(condition, theta_d_rad, L):
-    theta_d_half_rad = theta_d_rad / 2
-    # theta_d_half_rad = 16.5e-6
+#     jitter_params = {
+#         "weak": {
+#             "mu_x": 0 * L,
+#             "mu_y": 0 * L,
+#             "sigma_x": theta_d_half_rad / 5 * L,
+#             "sigma_y": theta_d_half_rad / 5 * L
+#         },
+#         "moderate": {
+#             "mu_x": theta_d_half_rad / 5 * L,
+#             "mu_y": theta_d_half_rad / 3 * L,
+#             "sigma_x": theta_d_half_rad / 2 * L,
+#             "sigma_y": theta_d_half_rad / 3 * L
+#         },
+#         "strong": {
+#             "mu_x": theta_d_half_rad / 5 * L,
+#             "mu_y": theta_d_half_rad / 3 * L,
+#             "sigma_x": theta_d_half_rad / 1.5 * L,
+#             "sigma_y": theta_d_half_rad / 2 * L
+#         }
+#     }
 
-    jitter_params = {
-        "weak": {
-            "mu_x": 0 * L,
-            "mu_y": 0 * L,
-            "sigma_x": theta_d_half_rad / 5 * L,
-            "sigma_y": theta_d_half_rad / 5 * L
-        },
-        "moderate": {
-            "mu_x": theta_d_half_rad / 5 * L,
-            "mu_y": theta_d_half_rad / 3 * L,
-            "sigma_x": theta_d_half_rad / 2 * L,
-            "sigma_y": theta_d_half_rad / 3 * L
-        },
-        "strong": {
-            "mu_x": theta_d_half_rad / 5 * L,
-            "mu_y": theta_d_half_rad / 3 * L,
-            "sigma_x": theta_d_half_rad / 1.5 * L,
-            "sigma_y": theta_d_half_rad / 2 * L
-        }
-    }
+#     if condition not in jitter_params:
+#         raise ValueError("Invalid condition. Choose from 'weak', 'moderate', or 'strong'.")
 
-    if condition not in jitter_params:
-        raise ValueError("Invalid condition. Choose from 'weak', 'moderate', or 'strong'.")
+#     return jitter_params[condition]
 
-    return jitter_params[condition]
+def Cn_squared(h):
+    return 1e-14
+
+# Beam footprint radius at receiver including turbulence
+def compute_w_L(lambda_, theta_d_half_rad, L, H_atm, H_OGS, theta_zen_rad):
+    k = 2 * math.pi / lambda_
+
+    w_0 = lambda_ / (math.pi * theta_d_half_rad)
+
+    W = w_0 * math.sqrt(1 + (2 * L) / (k * w_0))
+
+
+    def integrand(h):
+        return Cn_squared(h) * ((h - H_OGS) / (H_atm - H_OGS))**(5/3)
+
+    integral_result, _ = quad(integrand, H_OGS, H_atm)
+
+    T = 4.35 * ((2 * L) / (k * W**2))**(5/6) * \
+        k**(7/6) * (H_atm - H_OGS)**(5/6) * \
+        (1 / math.cos(theta_zen_rad))**(11/6) * integral_result
+
+    # Step 5: compute final beam radius at receiver
+    w_L = W * math.sqrt(1 + T)
+    return w_L
 
 
 # calculate modified beam-jitter variance approximation
@@ -222,16 +247,12 @@ def main():
     sigma_x = angle_sigma_x * L
     sigma_y = angle_sigma_y * L
 
-    # Beam footprint radius at receiver [m]
-    w_L = beam_waist(h_s, H_g, theta_zen_rad, theta_d_rad)
+    w_L = compute_w_L(lambda_, theta_d_half_rad, L, H_atm, H_g, theta_zen_rad)
 
-    # Step 1: Compute sigma_mod
     sigma_mod = compute_sigma_mod(mu_x, mu_y, sigma_x, sigma_y)
 
-    # Step 2: Compute equivalent beam width squared
     w_Leq_squared = equivalent_beam_width_squared(a, w_L)
 
-    # Step 3: Compute varphi_mod
     varphi = varphi_mod(w_Leq_squared, sigma_mod)
 
     # Output result
