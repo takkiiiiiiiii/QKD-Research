@@ -2,18 +2,18 @@
 from qiskit import QuantumCircuit
 from qiskit_aer import AerSimulator
 from qiskit_aer.noise import (NoiseModel, pauli_error)
-import time
+import time, os
 import socket
-from ave_qber_zenith import qner_new_infinite
+import matplotlib.pyplot as plt
+# from ave_qber_zenith import qner_new_infinite
 
 
-count = 1000
-num_qubits = 29
 backend = AerSimulator()
 intercept_prob = 0
 noise_prob = 0.1
-kr_efficiency = 1.22
+# kr_efficiency = 1.22
 
+# Maximum average raw key rate = 4828.04 Qubit/sec (N_q = 30)
 
 class User:
     def __init__(self, username: str, sharekey, socket_classical, socket_quantum):
@@ -57,18 +57,18 @@ def generate_Siftedkey(user0, user1, num_qubits):
 
     altered_qubits = 0
 
-    user0.create_socket_for_classical()
-    user1.create_socket_for_classical()
-    sender_classical_channel = user0.socket_classical
-    receiver_classical_channel = user1.socket_classical
+    # user0.create_socket_for_classical()
+    # user1.create_socket_for_classical()
+    # sender_classical_channel = user0.socket_classical
+    # receiver_classical_channel = user1.socket_classical
 
     ka = ''  # Alice's sifted key
     kb = ''  # Bob's sifted key
     err_num = 0
 
     # Announce bob's basis
-    receiver_classical_channel.send(bob_basis.encode('utf-8'))
-    bob_basis = sender_classical_channel.recv(4096).decode('utf-8')
+    # receiver_classical_channel.send(bob_basis.encode('utf-8'))
+    # bob_basis = sender_classical_channel.recv(4096).decode('utf-8')
     ab_basis, ab_matches = check_bases(alice_basis, bob_basis)
     ab_bits = check_bits(alice_bits, bob_bits, ab_basis)
 
@@ -85,8 +85,8 @@ def generate_Siftedkey(user0, user1, num_qubits):
     end = time.time()
     runtime = end - start
 
-    sender_classical_channel.close()
-    receiver_classical_channel.close()
+    # sender_classical_channel.close()
+    # receiver_classical_channel.close()
 
     return ka, kb, runtime
 
@@ -187,26 +187,45 @@ def check_bits(b1, b2, bck):
 
 
 def main():
-    # num_qubits = 10
-    # print(f"Channel Noise Ratio:             {noise_prob*100}%")
-    # print(f"Intercept-and-resend Ratio:      {intercept_prob*100}%")
-    # part_ka, part_kb, runtime = generate_Siftedkey(user0, user1, num_qubits)
-    # print(f'No. of Qubits: {num_qubits}: {runtime} bps')
     max_raw_keyrate = 0
+    raw_keyrates = []
     best_num_qubits = None
+    num_qubits_list = list(range(1, 31))
+    count_per_qubit = 1000  # 各qubit数での実行回数
 
-    for num_qubits in range(1, 30):  # 1 から 29 まで
-        part_ka, part_kb, runtime = generate_Siftedkey(user0, user1, num_qubits)
-        raw_keyrate = len(part_ka) / runtime
-        print(f'No. of Qubits: {num_qubits:2d}: {raw_keyrate} bps')
+    for num_qubits in num_qubits_list:
+        total_keyrate = 0
+        for _ in range(count_per_qubit):
+            part_ka, part_kb, runtime = generate_Siftedkey(user0, user1, num_qubits)
+            raw_keyrate = len(part_ka) / runtime
+            total_keyrate += raw_keyrate
+
+        avg_keyrate = total_keyrate / count_per_qubit
+        raw_keyrates.append(avg_keyrate)
+        print(f'No. of Qubits: {num_qubits:2d}: {avg_keyrate:.2f} Qubit/sec (avg over {count_per_qubit})')
         
-        if raw_keyrate > max_raw_keyrate:
-            max_raw_keyrate = raw_keyrate
+        if avg_keyrate > max_raw_keyrate:
+            max_raw_keyrate = avg_keyrate
             best_num_qubits = num_qubits
 
-    print(f'\nMax Raw key rate: {max_raw_keyrate} bps at {best_num_qubits} qubits')
+    print(f'\nMax Avg Raw key rate: {max_raw_keyrate:.2f} Qubit/sec at {best_num_qubits} qubits')
 
+    # グラフ作成
+    plt.figure(figsize=(10, 6))
+    plt.plot(num_qubits_list, raw_keyrates, marker='o', linestyle='-')
+    plt.title("Raw Key Rate vs Number of Qubits", fontsize=20)
+    plt.xlabel("Number of Qubits", fontsize=20)
+    plt.ylabel("Raw Key Rate (Qubit/sec)", fontsize=20)
+    plt.legend(fontsize=12)
+    plt.xticks(fontsize=20)
+    plt.yticks(fontsize=20)
+    plt.grid(True, linestyle='--', alpha=0.6)
+    plt.tight_layout()
+    output_path = os.path.join(os.path.dirname(__file__), "raw_key_rate2.png")
+    plt.savefig(output_path)
+    print(f"✅ Saved as: {output_path}")
+
+    plt.show()
 
 if __name__ == '__main__':
     main()
-

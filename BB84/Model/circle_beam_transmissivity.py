@@ -51,26 +51,26 @@ def transmissivity_0(a, W):
 # Scale function R
 # Shape function lambda
 #=======================================================#
-def safe_i0(x):
-    return np.where(x > 100, np.exp(x) / np.sqrt(2 * np.pi * x), i0(x))
+# def safe_i0(x):
+#     return np.where(x > 100, np.exp(x) / np.sqrt(2 * np.pi * x), i0(x))
 
 
-def r_scale(a, W):
-    exponent = 4 * (a ** 2) / (W ** 2)
-    denominator = 1 - np.exp(-exponent) * i0(exponent)
-    if denominator <= 0:
-        raise ValueError("Denominator in logarithm is non-positive, check input values.")
+# def r_scale(a, W):
+#     exponent = 4 * (a ** 2) / (W ** 2)
+#     denominator = 1 - np.exp(-exponent) * i0(exponent)
+#     if denominator <= 0:
+#         raise ValueError("Denominator in logarithm is non-positive, check input values.")
 
-    eta_0 = transmissivity_0(a, W)
-    log_argument = (2 * eta_0) / denominator
-    if log_argument <= 0:
-        raise ValueError("Argument of logarithm is non-positive, check input values.")
+#     eta_0 = transmissivity_0(a, W)
+#     log_argument = (2 * eta_0) / denominator
+#     if log_argument <= 0:
+#         raise ValueError("Argument of logarithm is non-positive, check input values.")
 
-    log_term = np.log(log_argument)
-    lambda_val = lambda_shape(a, W)
-    R = a * ((log_term) ** (-1 / lambda_val))
+#     log_term = np.log(log_argument)
+#     lambda_val = lambda_shape(a, W)
+#     R = a * ((log_term) ** (-1 / lambda_val))
 
-    return R
+#     return R
 
 #=======================================================#
 
@@ -78,29 +78,29 @@ def r_scale(a, W):
 #=======================================================#
 # Shape function lambda λ(ξ)
 #=======================================================#
-def safe_i1(x):
-    return np.where(x > 100, np.exp(x) / np.sqrt(2 * np.pi * x), i1(x))  
+# def safe_i1(x):
+#     return np.where(x > 100, np.exp(x) / np.sqrt(2 * np.pi * x), i1(x))  
 
 
-def lambda_shape(a, W):
-    exponent = 4 * (a ** 2) / (W ** 2)
-    exp_term = np.exp(-exponent)
-    I0_term = i0(exponent)
-    I1_term = i1(exponent)
-    denominator = 1 - exp_term * I0_term
-    if denominator <= 0:
-        raise ValueError("Denominator in lambda calculation is non-positive, check input values.")
+# def lambda_shape(a, W):
+#     exponent = 4 * (a ** 2) / (W ** 2)
+#     exp_term = np.exp(-exponent)
+#     I0_term = i0(exponent)
+#     I1_term = i1(exponent)
+#     denominator = 1 - exp_term * I0_term
+#     if denominator <= 0:
+#         raise ValueError("Denominator in lambda calculation is non-positive, check input values.")
 
-    eta_0 = transmissivity_0(a, W)
-    log_argument = (2 * eta_0) / denominator
-    if log_argument <= 0:
-        raise ValueError("Argument of logarithm is non-positive, check input values.")
+#     eta_0 = transmissivity_0(a, W)
+#     log_argument = (2 * eta_0) / denominator
+#     if log_argument <= 0:
+#         raise ValueError("Argument of logarithm is non-positive, check input values.")
 
-    log_term = np.log(log_argument)
+#     log_term = np.log(log_argument)
 
-    lambda_val = (8 * (a ** 2) / (W ** 2)) * (exp_term * I1_term / denominator) * (1 / log_term)
+#     lambda_val = (8 * (a ** 2) / (W ** 2)) * (exp_term * I1_term / denominator) * (1 / log_term)
 
-    return lambda_val
+#     return lambda_val
 
 #=======================================================#
 
