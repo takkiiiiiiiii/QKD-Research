@@ -23,10 +23,11 @@ from atmospheric_transmissivity import transmissivity_etat
 #==================================================================#
 a = 0.75
 
+r = 5
 #==================================================================#
 # n_s : average number of photon
 #==================================================================#
-n_s = 0.1
+n_s = 0.8
 
 #==================================================================#
 # len_wave : Optical wavelength (μm)
@@ -90,8 +91,9 @@ Y_0 = 1e-4
 P_AP = 0.02
 e_pol = 0.033
 
-
+#==================================================================#
 # calculate modified beam-jitter variance approximation
+#==================================================================#
 def approximate_jitter_variance(mu_x, mu_y, sigma_x, sigma_y):
     numerator = (
         3 * mu_x**2 * sigma_x**4 +
@@ -103,40 +105,19 @@ def approximate_jitter_variance(mu_x, mu_y, sigma_x, sigma_y):
     return sigma_mod_value
 
 
-
+#==================================================================#
+# Compute beam propagation disteance
+#==================================================================#
 def satellite_ground_distance(h_s, H_g, theta_zen_rad):
     return (h_s - H_g) / math.cos(theta_zen_rad)
 
-# Compute Rytov variance σ_R^2 for atmospheric turbulence.
-def rytov_variance(len_wave, theta_zen_rad, H_OGS, H_atm, Cn2_profile):
-    k = 2 * np.pi / len_wave
-    sec_zenith = 1 / np.cos(theta_zen_rad)
 
-    def integrand(h):
-        return Cn2_profile(h) * (h - H_OGS)**(5/6)
-
-    integral, _ = quad(integrand, H_OGS, H_atm, limit=100, epsabs=1e-9, epsrel=1e-9)
-
-    sigma_R_squared = 2.25 * (k)**(7/6) * sec_zenith**(11/6) * integral
-
-    return sigma_R_squared
-
-# def simple_cn2_profile(h):
-#     """ A simple model for Cn^2(h) [m^-2/3] """
-#     return 1e-14 * np.exp(-h / 1000) 
-
-
-def cn2_profile(h, v_wind=21, Cn2_0=1e-13):
-    term1 = 0.00594 * (v_wind / 27)**2 * (1e-5 * h)**10 * np.exp(-h / 1000)
-    term2 = 2.7e-16 * np.exp(-h / 1500)
-    term3 = Cn2_0 * np.exp(-h / 100)
-    return term1 + term2 + term3
-
-
+#==================================================================#
 # Calculate the fading loss value
+#==================================================================#
 def fading_loss(eta, mu_x, mu_y, sigma_x, sigma_y, theta_zen_rad, H_atm, w_L, w_Leq, tau_zen, varphi_mod):
     eta_t = transmissivity_etat(tau_zen, theta_zen_rad)
-    sigma_R_squared = rytov_variance(lambda_, theta_zen_rad, H_g, H_atm, cn2_profile)
+    sigma_R_squared = rytov_variance(lambda_, theta_zen_rad, H_g, H_atm, Cn2_profile)
     A_mod = mod_jitter(mu_x, mu_y, sigma_x, sigma_y, w_L, w_Leq)
     mu = sigma_R_squared/2 * (1+2*varphi_mod**2)
     term1 = (varphi_mod**2) / (2 * (A_mod * eta_t)**(varphi_mod**2))
@@ -158,19 +139,18 @@ def weather_condition(tau_zen):
         return 'Poor visibility'
 
 
-def Cn_squared(h):
-    return 1e-13
-
+#==================================================================#
 # Beam footprint radius at receiver including turbulence
-def compute_w_L(lambda_, theta_d_half_rad, L, H_atm, H_OGS, theta_zen_rad):
+#==================================================================#
+def compute_w_L(lambda_, theta_d_half_rad, L, H_atm, H_OGS, theta_zen_rad, Cn2_profile):
     k = 2 * math.pi / lambda_
 
     w_0 = lambda_ / (math.pi * theta_d_half_rad)
 
-    W = w_0 * math.sqrt(1 + (2 * L) / (k * w_0))
+    W = w_0 * math.sqrt(1 + (2 * L) / (k * w_0**2))
 
     def integrand(h):
-        return Cn_squared(h) * ((h - H_OGS) / (H_atm - H_OGS))**(5/3)
+        return Cn2_profile(h) * ((h - H_OGS) / (H_atm - H_OGS))**(5/3)
 
     # integral_result, _ = quad(integrand, H_OGS, H_atm)
     integral_result, _ = quad(integrand, H_OGS, H_atm)
@@ -185,23 +165,16 @@ def compute_w_L(lambda_, theta_d_half_rad, L, H_atm, H_OGS, theta_zen_rad):
     return w_L
 
 
-# calculate modified beam-jitter variance approximation
-def approximate_jitter_variance(mu_x, mu_y, sigma_x, sigma_y):
-    numerator = (
-        3 * mu_x**2 * sigma_x**4 +
-        3 * mu_y**2 * sigma_y**4 +
-        sigma_x**6 +
-        sigma_y**6
-    )
-    sigma_mod_value = (numerator / 2) ** (1/3)
-    return sigma_mod_value
-
+#==================================================================#
 # calculate the ratios between the equivalent beam-width and (modified) beam-jitter variances
+#==================================================================#
 def sigma_to_variance(sigma, w_Leq):
     variance = w_Leq/2*sigma
     return variance
 
+#==================================================================#
 # calculate the modified fracton of collected power over the receiving aparture when there is no pointing error
+#==================================================================#
 def mod_jitter(mu_x, mu_y, sigma_x, sigma_y, w_L, w_Leq):
     A_0 = maxmum_fracrion_A0(w_L)
     varphi_x = sigma_to_variance(sigma_x, w_Leq)
@@ -218,7 +191,9 @@ def mod_jitter(mu_x, mu_y, sigma_x, sigma_y, w_L, w_Leq):
     return A_mod
 
 
-# Compute Rytov variance σ_R^2 for atmospheric turbulence.
+#==================================================================#
+# Compute Rytov variance σ_R^2 for atmospheric turbulence
+#==================================================================#
 def rytov_variance(len_wave, theta_zen_rad, H_OGS, H_atm, Cn2_profile):
     k = 2 * np.pi / len_wave
     sec_zenith = 1 / np.cos(theta_zen_rad)
@@ -232,15 +207,19 @@ def rytov_variance(len_wave, theta_zen_rad, H_OGS, H_atm, Cn2_profile):
 
     return sigma_R_squared
 
-
-def cn2_profile(h, v_wind=21, Cn2_0=1e-13):
+#==================================================================#
+# Hufnagel-Valley model
+#==================================================================#
+def Cn2_profile(h, v_wind=21, Cn2_0=1e-13):
     term1 = 0.00594 * (v_wind / 27)**2 * (1e-5 * h)**10 * np.exp(-h / 1000)
     term2 = 2.7e-16 * np.exp(-h / 1500)
     term3 = Cn2_0 * np.exp(-h / 100)
     return term1 + term2 + term3
 
 
+#==================================================================#
 # Calculate sigma_mod
+#==================================================================#
 def compute_sigma_mod(mu_x, mu_y, sigma_x, sigma_y):
     numerator = (
         3 * mu_x**2 * sigma_x**4 +
@@ -251,7 +230,9 @@ def compute_sigma_mod(mu_x, mu_y, sigma_x, sigma_y):
     sigma_mod = (numerator / 2) ** (1/3)
     return sigma_mod
 
-# Equivalent Beam Width
+#==================================================================#
+# Compute equivalent Beam Width
+#==================================================================#
 def equivalent_beam_width_squared(a, w_Leq):
     nu = (math.sqrt(math.pi) * a) / (math.sqrt(2) * w_Leq)
     numerator = math.sqrt(math.pi) * erf(nu)
@@ -284,7 +265,7 @@ def qber_loss(eta, n_s):
 def transmissivity_etap(theta_zen_rad):
     L = satellite_ground_distance(h_s, H_g, theta_zen_rad)
 
-    w_L = compute_w_L(lambda_, theta_d_half_rad, L, H_atm, H_g, theta_zen_rad)
+    w_L = compute_w_L(lambda_, theta_d_half_rad, L, H_atm, H_g, theta_zen_rad, Cn2_profile)
 
     w_Leq_squared = equivalent_beam_width_squared(a, w_L)
     nu = (math.sqrt(math.pi) * a) / (math.sqrt(2) * w_L)
@@ -316,11 +297,10 @@ def qner_new_infinite(theta_zen_rad, H_atm, w_L, tau_zen, LoS):
     sigma_x = angle_sigma_x * LoS
     sigma_y = angle_sigma_y * LoS
 
-    sigma_mod = compute_sigma_mod(mu_x, mu_y, sigma_x, sigma_y)
     w_Leq_squared = equivalent_beam_width_squared(a, w_L)
-    varphi_mod = compute_varphi_mod(w_Leq_squared, sigma_mod)
     w_Leq = math.sqrt(w_Leq_squared)
-    
+    sigma_mod = compute_sigma_mod(mu_x, mu_y, sigma_x, sigma_y)
+    varphi_mod = sigma_to_variance(sigma_mod, w_Leq)
 
     def integrand(eta):
         return fading_loss(eta, mu_x, mu_y, sigma_x, sigma_y, theta_zen_rad, H_atm, w_L, w_Leq, tau_zen, varphi_mod) * qber_loss(eta, n_s)
@@ -328,10 +308,16 @@ def qner_new_infinite(theta_zen_rad, H_atm, w_L, tau_zen, LoS):
     result, _ = quad(integrand, 0, np.inf, limit=100, epsabs=1e-9, epsrel=1e-9)
     return result
 
+#==================================================================#
+# fading_loss : PDF of beam jitter for γ
+# qber_loss   : smission efficiency Bit error rate with respect to γ
+# h_s         : Satellite's altitude (m)
+#==================================================================#
+
 
 def main():
     tau_zen_list = [0.91, 0.85, 0.75, 0.65]
-    theta_zen_deg_list = np.linspace(-60, 60, 200)
+    theta_zen_deg_list = np.linspace(-59, 59, 200)
 
     plt.figure(figsize=(10, 6))
 
@@ -342,7 +328,7 @@ def main():
             theta_zen_rad = math.radians(theta_zen_deg)
             H_atm = 20000
             LoS = satellite_ground_distance(h_s, H_g, theta_zen_rad)
-            w_L = compute_w_L(lambda_, theta_d_half_rad, LoS, H_atm, H_g, theta_zen_rad)
+            w_L = compute_w_L(lambda_, theta_d_half_rad, LoS, H_atm, H_g, theta_zen_rad, Cn2_profile)
 
             qber = qner_new_infinite(theta_zen_rad, H_atm, w_L, tau_zen, LoS)
             qber_values.append(qber*100)
@@ -360,7 +346,7 @@ def main():
     plt.yticks(fontsize=20)
     plt.tight_layout()
 
-    output_path = os.path.join(os.path.dirname(__file__), 'qber_vs_zenith_all_conditions.png')
+    output_path = os.path.join(os.path.dirname(__file__), f'qber_vs_zenith_all_conditions_{n_s}.png')
     plt.savefig(output_path)
     print(f"✅ Saved as: {output_path}")
     plt.show()

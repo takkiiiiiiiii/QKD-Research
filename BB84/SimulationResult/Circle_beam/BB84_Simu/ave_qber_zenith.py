@@ -85,38 +85,6 @@ v_wind = 21
 # waist = beam_waist(h_s, H_a, theta_zen_rad, theta_d_rad)
 
 
-
-
-def get_beam_jitter_params(condition, theta_d_rad, H_s):
-    theta_d_half_rad = theta_d_rad / 2
-
-    jitter_params = {
-        "weak": {
-            "mu_x": 0 * H_s,
-            "mu_y": 0 * H_s,
-            "sigma_x": theta_d_half_rad / 5 * H_s,
-            "sigma_y": theta_d_half_rad / 5 * H_s
-        },
-        "moderate": {
-            "mu_x": theta_d_half_rad / 5 * H_s,
-            "mu_y": theta_d_half_rad / 3 * H_s,
-            "sigma_x": theta_d_half_rad / 2 * H_s,
-            "sigma_y": theta_d_half_rad / 3 * H_s
-        },
-        "strong": {
-            "mu_x": theta_d_half_rad / 5 * H_s,
-            "mu_y": theta_d_half_rad / 3 * H_s,
-            "sigma_x": theta_d_half_rad / 1.5 * H_s,
-            "sigma_y": theta_d_half_rad / 2 * H_s
-        }
-    }
-
-    if condition not in jitter_params:
-        raise ValueError("Invalid condition. Choose from 'weak', 'moderate', or 'strong'.")
-
-    return jitter_params[condition]
-
-
 # calculate modified beam-jitter variance approximation
 def approximate_jitter_variance(mu_x, mu_y, sigma_x, sigma_y):
     numerator = (
