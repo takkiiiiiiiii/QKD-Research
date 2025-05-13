@@ -19,7 +19,7 @@ a = 0.75
 # #==================================================================#
 # # r : Radial jitter distance (m)
 # #==================================================================#
-r = 5
+r = 3
 
 # #==================================================================#
 # # len_wave : Optical wavelength (μm)
@@ -37,11 +37,6 @@ H_g = 10 # (m)
 h_s = 550e3  # 500 km
 
 # #==================================================================#
-# # H_a : Upper end of atmosphere (km)
-# #==================================================================#
-H_a = 0.01  # 10 m (大気の終端高度)
-
-# #==================================================================#
 # # tau_zen : Transmission efficiency at zenith
 # #==================================================================#
 tau_zen = 0.85  # 天頂方向での大気透過率
@@ -49,12 +44,12 @@ tau_zen = 0.85  # 天頂方向での大気透過率
 # #==================================================================#
 # # theta_zen_rad : Zenith angle (rad)
 # #==================================================================#
-theta_zen_rad = math.radians(10)
+theta_zen_rad = math.radians(40)
 
 # #==================================================================#
 # # theta_d_rad : Optical beam divergence angle (rad)
 # #==================================================================#
-theta_d_rad = 10e-6 
+theta_d_rad =20e-6 
 
 # #==================================================================#
 # # v_wind: wind_speed
@@ -65,7 +60,7 @@ v_wind = 21
 # slant path h_slant,max over the atmosphere at minimum zenith angle
 # atomospheric altitude
 #==================================================================#
-H_atm = 20000
+H_atm = 20e3
 
 #==================================================================#
 # waist : Beam waist radius at receiver (m)
@@ -82,50 +77,19 @@ H_atm = 20000
 # sigma_y = 3e-6
 
 theta_d_half_rad = theta_d_rad / 2
-# def get_beam_jitter_params(condition, theta_d_rad, L):
-#     theta_d_half_rad = theta_d_rad / 2
-#     # theta_d_half_rad = 16.5e-6
-
-#     jitter_params = {
-#         "weak": {
-#             "mu_x": 0 * L,
-#             "mu_y": 0 * L,
-#             "sigma_x": theta_d_half_rad / 5 * L,
-#             "sigma_y": theta_d_half_rad / 5 * L
-#         },
-#         "moderate": {
-#             "mu_x": theta_d_half_rad / 5 * L,
-#             "mu_y": theta_d_half_rad / 3 * L,
-#             "sigma_x": theta_d_half_rad / 2 * L,
-#             "sigma_y": theta_d_half_rad / 3 * L
-#         },
-#         "strong": {
-#             "mu_x": theta_d_half_rad / 5 * L,
-#             "mu_y": theta_d_half_rad / 3 * L,
-#             "sigma_x": theta_d_half_rad / 1.5 * L,
-#             "sigma_y": theta_d_half_rad / 2 * L
-#         }
-#     }
-
-#     if condition not in jitter_params:
-#         raise ValueError("Invalid condition. Choose from 'weak', 'moderate', or 'strong'.")
-
-#     return jitter_params[condition]
-
-def Cn_squared(h):
-    return 1e-13
+# theta_d_half_rad = 16.5e-6
 
 # Beam footprint radius at receiver including turbulence
-def compute_w_L(lambda_, theta_d_half_rad, L, H_atm, H_OGS, theta_zen_rad):
+def compute_w_L(lambda_, theta_d_half_rad, L, H_atm, H_OGS, theta_zen_rad, cn2_profile):
     k = 2 * math.pi / lambda_
 
     w_0 = lambda_ / (math.pi * theta_d_half_rad)
 
-    W = w_0 * math.sqrt(1 + (2 * L) / (k * w_0))
-
+    W = w_0 * math.sqrt(1 + (2 * L) / (k * w_0**2))
+    print(W)
 
     def integrand(h):
-        return Cn_squared(h) * ((h - H_OGS) / (H_atm - H_OGS))**(5/3)
+        return cn2_profile(h) * ((h - H_OGS) / (H_atm - H_OGS))**(5/3)
 
     # integral_result, _ = quad(integrand, H_OGS, H_atm)
     integral_result, _ = quad(integrand, H_OGS, H_atm)
@@ -188,7 +152,7 @@ def rytov_variance(len_wave, theta_zen_rad, H_OGS, H_atm, Cn2_profile):
     return sigma_R_squared
 
 
-def cn2_profile(h, v_wind=21, Cn2_0=1e-17):
+def cn2_profile(h, v_wind=21, Cn2_0=1e-13):
     term1 = 0.00594 * (v_wind / 27)**2 * (1e-5 * h)**10 * np.exp(-h / 1000)
     term2 = 2.7e-16 * np.exp(-h / 1500)
     term3 = Cn2_0 * np.exp(-h / 100)
@@ -220,15 +184,14 @@ def varphi_mod(w_Leq_squared, sigma_mod):
     return w_Leq / (2 * sigma_mod)
 
 # Calculate the fading loss value
-def fading_loss(gamma, mu_x, mu_y, sigma_x, sigma_y, theta_zen_rad, H_atm, waist):
+def fading_loss(eta, mu_x, mu_y, sigma_x, sigma_y, theta_zen_rad, H_atm, waist):
     eta_t = transmissivity_etat(tau_zen, theta_zen_rad)
     sigma_R_squared = rytov_variance(lambda_, theta_zen_rad, H_g, H_atm, cn2_profile)
-    varphi_mod = 4.3292
     A_mod = mod_jitter(mu_x, mu_y, sigma_x, sigma_y, waist)
     mu = sigma_R_squared/2 * (1+2*varphi_mod**2)
     term1 = (varphi_mod**2) / (2 * (A_mod * eta_t)**(varphi_mod**2))
-    term2 = gamma ** (varphi_mod**2 - 1)
-    term3 = erfc((np.log((gamma / (A_mod * eta_t))) + mu) / (np.sqrt(2) * math.sqrt(sigma_R_squared)))
+    term2 = eta ** (varphi_mod**2 - 1)
+    term3 = erfc((np.log((eta / (A_mod * eta_t))) + mu) / (np.sqrt(2) * math.sqrt(sigma_R_squared)))
     term4 = np.exp(((sigma_R_squared/2) * varphi_mod**2 * (1 + varphi_mod**2)))
     eta_f = term1 * term2 * term3 * term4
     return eta_f
@@ -240,29 +203,31 @@ def to_decimal_string(x, precision=100):
 
 def main():
     # beam propagation distance
-    L = satellite_ground_distance(h_s, H_g, theta_zen_rad)
+    LoS = satellite_ground_distance(h_s, H_g, theta_zen_rad)
     # beam jitter param
     mu_y = 0
     mu_x = 0
     angle_sigma_x = 3e-6
     angle_sigma_y = 3e-6
-    sigma_x = angle_sigma_x * L
-    sigma_y = angle_sigma_y * L
+    sigma_x = angle_sigma_x * LoS
+    sigma_y = angle_sigma_y * LoS
 
-    w_L = compute_w_L(lambda_, theta_d_half_rad, L, H_atm, H_g, theta_zen_rad)
+    w_L = compute_w_L(lambda_, theta_d_half_rad, LoS, H_atm, H_g, theta_zen_rad, cn2_profile)
 
     sigma_mod = compute_sigma_mod(mu_x, mu_y, sigma_x, sigma_y)
 
     w_Leq_squared = equivalent_beam_width_squared(a, w_L)
+    w_Leq = math.sqrt(w_Leq_squared)
 
-    varphi = varphi_mod(w_Leq_squared, sigma_mod)
+    # varphi = varphi_mod(w_Leq_squared, sigma_mod)
+    varphi_mod = sigma_to_variance(sigma_mod, w_Leq)
 
     print(f"Aparture radius:                  {a} [m]")
     print(f"Receiver's Beam footprint radius: {w_L:.3e} [m]")
     print(f"Equivalent Beam width:            {math.sqrt(w_Leq_squared):.3e} [m]")
     print(f"sigma_mod:                        {sigma_mod:.3e} [m]")
     print(f"w_Leq_squared:                    {w_Leq_squared:.3e} [m^2]")
-    print(f"varphi_mod:                       {varphi:.3f}")
+    print(f"varphi_mod:                       {varphi_mod:.3f}")
 
 
 if __name__ == '__main__':
