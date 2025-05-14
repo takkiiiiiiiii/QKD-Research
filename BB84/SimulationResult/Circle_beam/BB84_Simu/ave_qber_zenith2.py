@@ -47,7 +47,7 @@ h_s = 550e3  # 500 km
 #==================================================================#
 # H_a : Upper end of atmosphere (km)
 #==================================================================#
-H_a = 0.01  # 10 m (大気の終端高度)
+H_atm = 20000 # 20 km
 
 #==================================================================#
 # tau_zen : Transmission efficiency at zenith
@@ -63,6 +63,8 @@ H_a = 0.01  # 10 m (大気の終端高度)
 # theta_d_rad : Optical beam divergence angle (rad)
 #==================================================================#
 theta_d_rad = 20e-6 
+
+theta_d_half_rad = theta_d_rad/2
 
 #==================================================================#
 # v_wind: wind_speed
@@ -202,9 +204,9 @@ def fading_loss(gamma, mu_x, mu_y, sigma_x, sigma_y, theta_zen_rad, H_atm, w_L, 
 #=======================================================#
 # Beam waist function
 #=======================================================#
-def beam_waist(h_s, H_g, theta_zen_rad, theta_d_rad):
+def beam_waist(h_s, H_g, theta_zen_rad, theta_d_half_rad):
     L_a = satellite_ground_distance(h_s, H_g, theta_zen_rad)
-    waist = L_a * theta_d_rad
+    waist = L_a * theta_d_half_rad
     return waist
 
 #==================================================================#
@@ -278,11 +280,11 @@ def main():
 
     for tau_zen in tau_zen_list:
         qber_values = []
-        weather_condition_str, H_atm = weather_condition(tau_zen)
+        weather_condition_str = weather_condition(tau_zen)
         for theta_zen_deg in theta_zen_deg_list:
             theta_zen_rad = math.radians(theta_zen_deg)
 
-            waist = beam_waist(h_s, H_ogs, theta_zen_rad, theta_d_rad)
+            waist = beam_waist(h_s, H_ogs, theta_zen_rad, theta_d_half_rad)
             qber = qner_new_infinite(theta_zen_rad, H_atm, waist, tau_zen)
             qber_values.append(qber*100)
 

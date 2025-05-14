@@ -252,6 +252,10 @@ def equivalent_beam_width_squared(a, w_L):
     denominator = 2 * nu * math.exp(-nu**2)
     return w_L**2 * (numerator / denominator)
 
+def beam_waist(h_s, H_g, theta_zen_rad, theta_d_half_rad):
+    L_a = satellite_ground_distance(h_s, H_g, theta_zen_rad)
+    waist = L_a * theta_d_half_rad
+    return waist
 
 #==================================================================#
 # Calculate varphi_mod
@@ -277,13 +281,15 @@ def qber_loss(eta, n_s):
 def transmissivity_etap(theta_zen_rad, r):
     LoS = satellite_ground_distance(h_s, H_g, theta_zen_rad)
 
-    w_L = compute_w_L(lambda_, theta_d_half_rad, LoS, H_atm, H_g, theta_zen_rad, Cn2_profile)
-
-    w_Leq_squared = equivalent_beam_width_squared(a, w_L)
+    # w_L = compute_w_L(lambda_, theta_d_half_rad, LoS, H_atm, H_g, theta_zen_rad, Cn2_profile)
+    w_L = beam_waist(h_s, H_g, theta_zen_rad, theta_d_half_rad)
+    # print(fr'w_L: {w_L}')
+    # w_Leq_squared = equivalent_beam_width_squared(a, w_L)
     nu = (math.sqrt(math.pi) * a) / (math.sqrt(2) * w_L)
-
+    print(fr'nu: {nu}')
     A0 = erf(nu)**2
-    eta_p = A0 * np.exp(-(2*r**2)/(w_Leq_squared))
+    # print(f'A0: {A0}')
+    eta_p = A0 * np.exp(-(2*r**2)/(w_L))
     return eta_p
 
 
