@@ -4,7 +4,7 @@ from qiskit_aer import AerSimulator
 from qiskit_aer.noise import (NoiseModel, pauli_error)
 import time
 import socket, math
-from ave_qber_zenith import *
+from ave_qber_zenith2 import *
 import numpy as np
 import os, sys
 import matplotlib.pyplot as plt
@@ -288,9 +288,10 @@ def main():
         for theta_zen_deg in theta_zen_deg_list:
             theta_zen_rad = math.radians(theta_zen_deg)
             LoS = satellite_ground_distance(h_s, H_g, theta_zen_rad)
-            r = compute_radial_displacement(mu_x, mu_y, angle_sigma_x, angle_sigma_y, LoS, size=1)
-            w_L = compute_w_L(lambda_, theta_d_half_rad, LoS, H_atm, H_g, theta_zen_rad, Cn2_profile)
-            print(w_L)
+            w_L = beam_waist(h_s, H_g, theta_zen_rad, theta_d_rad)
+            # r = compute_radial_displacement(mu_x, mu_y, angle_sigma_x, angle_sigma_y, LoS, size=1)
+            # w_L = compute_w_L(lambda_, theta_d_half_rad, LoS, H_atm, H_g, theta_zen_rad, Cn2_profile)
+
             prob_error = qner_new_infinite(theta_zen_rad, H_atm, w_L, tau_zen, LoS)
             qber_samples = []
             for _ in range(num_samples):
