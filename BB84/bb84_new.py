@@ -207,7 +207,7 @@ def check_bits(b1, b2, bck):
 def main():
     print(f"Channel Noise Ratio:             {noise_prob*100}%")
     print(f"Intercept-and-resend Ratio:      {intercept_prob*100}%")
-    part_ka, part_kb, execution_time = generate_Siftedkey(user0, user1, 10)
+    part_ka, part_kb, execution_time = generate_Siftedkey(user0, user1, int(1e4))
     print(f'Sifted key: {part_ka} and {part_kb}')
     print(f'Runtime: {execution_time}')
 

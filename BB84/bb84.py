@@ -284,29 +284,30 @@ def compare_bases(n, ab_bases, ab_bits, alice_bits, bob_bits):
 # Derive the final key rate
 # Consider Raw key rate
 def main():
-    print(f"Channel Noise Ratio:             {noise_prob*100}%")
-    print(f"Intercept-and-resend Ratio:      {intercept_prob*100}%")
-    for j in range (12, 13):
-        if j == 0:
-            continue
-        total_rawkeyrate = 0
-        total_siftedkeyrate = 0
-        total_executiontime = 0
-        print(f"Numnber of Qubits:               {j}")
-        for i in range(count):
-            part_ka, part_kb, execution_time = generate_Siftedkey(user0, user1, j)
-            raw_keyrate = j / execution_time
-            sifted_keyrate = len(part_ka) / execution_time
-            total_rawkeyrate += raw_keyrate
-            total_siftedkeyrate += sifted_keyrate
-            total_executiontime += execution_time
-            error = ''
-            num_qubits = 0 # the number of all qubits to generate sifted key
-        print(F"Number of Qubits: {j}")
-        print(f"Average of Raw key rate:             {total_rawkeyrate/count} bps")
-        print(f"Average of Sifted key rate:             {total_siftedkeyrate/count} bps")
-        print(f"Average of Execution time:             {total_executiontime/count} s")
+    # print(f"Channel Noise Ratio:             {noise_prob*100}%")
+    # print(f"Intercept-and-resend Ratio:      {intercept_prob*100}%")
+    # for j in range (12, 13):
+    #     if j == 0:
+    #         continue
+    #     total_rawkeyrate = 0
+    #     total_siftedkeyrate = 0
+    #     total_executiontime = 0
+    #     print(f"Numnber of Qubits:               {j}")
+    #     for i in range(count):
+    #         part_ka, part_kb, execution_time = generate_Siftedkey(user0, user1, j)
+    #         raw_keyrate = j / execution_time
+    #         sifted_keyrate = len(part_ka) / execution_time
+    #         total_rawkeyrate += raw_keyrate
+    #         total_siftedkeyrate += sifted_keyrate
+    #         total_executiontime += execution_time
+    #         error = ''
+    #         num_qubits = 0 # the number of all qubits to generate sifted key
+    #     print(F"Number of Qubits: {j}")
+    #     print(f"Average of Raw key rate:             {total_rawkeyrate/count} bps")
+    #     print(f"Average of Sifted key rate:             {total_siftedkeyrate/count} bps")
+    #     print(f"Average of Execution time:             {total_executiontime/count} s")
 
+    part_ka, part_kb, execution_time = generate_Siftedkey(user0, user1, 100)
     # print(f'Final Key Rate (average of {count}):  {total_keyrate / count}')
     # print(f"QBER (average of {count}):             {total_qber/count}")
 

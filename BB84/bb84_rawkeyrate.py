@@ -190,8 +190,10 @@ def main():
     max_raw_keyrate = 0
     raw_keyrates = []
     best_num_qubits = None
-    num_qubits_list = list(range(1, 31))
-    count_per_qubit = 1000  # 各qubit数での実行回数
+    # num_qubits_list = list(range(10, 1000))
+    num_qubits_list = list(range(100, 400, 10))
+
+    count_per_qubit = 100  # 各qubit数での実行回数
 
     for num_qubits in num_qubits_list:
         total_keyrate = 0
@@ -216,7 +218,7 @@ def main():
     plt.title("Raw Key Rate vs Number of Qubits", fontsize=20)
     plt.xlabel("Number of Qubits", fontsize=20)
     plt.ylabel("Raw Key Rate (Qubit/sec)", fontsize=20)
-    plt.legend(fontsize=12)
+    # plt.legend(fontsize=12)
     plt.xticks(fontsize=20)
     plt.yticks(fontsize=20)
     plt.grid(True, linestyle='--', alpha=0.6)
