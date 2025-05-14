@@ -3,6 +3,7 @@ import numpy as np
 from scipy.integrate import quad
 from scipy.special import erfc
 from scipy.special import erf
+from scipy.stats import lognorm
 import matplotlib.pyplot as plt
 from scipy.integrate import quad
 import os, sys
@@ -11,7 +12,6 @@ import os, sys
 simulation_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../../', 'Model'))
 sys.path.append(simulation_path)
 
-from circle_beam_transmissivity import satellite_ground_distance
 from atmospheric_transmissivity import transmissivity_etat
 
 
@@ -23,11 +23,11 @@ from atmospheric_transmissivity import transmissivity_etat
 #==================================================================#
 a = 0.75
 
-r = 5
+# r = 5
 #==================================================================#
 # n_s : average number of photon
 #==================================================================#
-n_s = 0.8
+n_s = 0.1
 
 #==================================================================#
 # len_wave : Optical wavelength (μm)
@@ -92,6 +92,18 @@ P_AP = 0.02
 e_pol = 0.033
 
 #==================================================================#
+# I_a: random intensity loss due to the atmospheric turbulence
+#==================================================================#
+def compute_intensity_loss(sigma_R_squared, size=1):
+    shape_param = np.sqrt(sigma_R_squared)
+    
+    I_a_random = lognorm.rvs(shape_param, loc=0, scale=1, size=size)
+    
+    return I_a_random
+    
+
+
+#==================================================================#
 # calculate modified beam-jitter variance approximation
 #==================================================================#
 def approximate_jitter_variance(mu_x, mu_y, sigma_x, sigma_y):
@@ -112,32 +124,36 @@ def satellite_ground_distance(h_s, H_g, theta_zen_rad):
     return (h_s - H_g) / math.cos(theta_zen_rad)
 
 
-#==================================================================#
-# Calculate the fading loss value
-#==================================================================#
 def fading_loss(eta, mu_x, mu_y, sigma_x, sigma_y, theta_zen_rad, H_atm, w_L, w_Leq, tau_zen, varphi_mod):
     eta_t = transmissivity_etat(tau_zen, theta_zen_rad)
     sigma_R_squared = rytov_variance(lambda_, theta_zen_rad, H_g, H_atm, Cn2_profile)
+
     A_mod = mod_jitter(mu_x, mu_y, sigma_x, sigma_y, w_L, w_Leq)
-    mu = sigma_R_squared/2 * (1+2*varphi_mod**2)
+    mu = sigma_R_squared / 2 * (1 + 2 * varphi_mod**2)
+    
+    # Debugging print to check values
+    # print(f"theta_zen_rad: {theta_zen_rad} radians ({np.degrees(theta_zen_rad)} degrees)")
+    # print(f"varphi_mod: {varphi_mod}")
+    # print(f"sigma_R_squared: {sigma_R_squared}")
+    
     term1 = (varphi_mod**2) / (2 * (A_mod * eta_t)**(varphi_mod**2))
     term2 = eta ** (varphi_mod**2 - 1)
     term3 = erfc((np.log((eta / (A_mod * eta_t))) + mu) / (np.sqrt(2) * math.sqrt(sigma_R_squared)))
-    term4 = np.exp(((sigma_R_squared/2) * varphi_mod**2 * (1 + varphi_mod**2)))
+    
+    # Check for overflow possibility in term4
+    exponent = (sigma_R_squared / 2) * varphi_mod**2 * (1 + varphi_mod**2)
+    # print(f"Exponent for term4: {exponent}")
+    
+
+    # Check if exponent is too large
+    if exponent > 700:  # Avoid overflow
+        print(f"Warning: Exponent is too large, term4 will overflow. Exponent value: {exponent}")
+    
+    term4 = np.exp(np.clip(exponent, None, 700))  # Limit the exponent to avoid overflow
+    print(exponent)
+    
     eta_f = term1 * term2 * term3 * term4
     return eta_f
-
-
-def weather_condition(tau_zen):
-    if tau_zen == 0.91:
-        return 'Clear sky'
-    elif tau_zen == 0.85:
-        return 'Slightly hazy'
-    elif tau_zen == 0.75:
-        return 'Noticeably hazy'
-    else:
-        return 'Poor visibility'
-
 
 #==================================================================#
 # Beam footprint radius at receiver including turbulence
@@ -262,10 +278,10 @@ def qber_loss(eta, n_s):
 #==================================================================#
 # Compute eta_p : beam misalignment and spreading loss
 #==================================================================#
-def transmissivity_etap(theta_zen_rad):
-    L = satellite_ground_distance(h_s, H_g, theta_zen_rad)
+def transmissivity_etap(theta_zen_rad, r):
+    Los = satellite_ground_distance(h_s, H_g, theta_zen_rad)
 
-    w_L = compute_w_L(lambda_, theta_d_half_rad, L, H_atm, H_g, theta_zen_rad, Cn2_profile)
+    w_L = compute_w_L(lambda_, theta_d_half_rad, Los, H_atm, H_g, theta_zen_rad, Cn2_profile)
 
     w_Leq_squared = equivalent_beam_width_squared(a, w_L)
     nu = (math.sqrt(math.pi) * a) / (math.sqrt(2) * w_L)
@@ -309,31 +325,81 @@ def qner_new_infinite(theta_zen_rad, H_atm, w_L, tau_zen, LoS):
     return result
 
 #==================================================================#
-# fading_loss : PDF of beam jitter for γ
-# qber_loss   : smission efficiency Bit error rate with respect to γ
-# h_s         : Satellite's altitude (m)
+# Compute radial displacement due to beam pointing jitter.
 #==================================================================#
+def compute_radial_displacement(mu_x, mu_y, angle_sigma_x, angle_sigma_y, LoS, size=1):
+    sigma_x = angle_sigma_x * LoS
+    sigma_y = angle_sigma_y * LoS
+
+    x = np.random.normal(loc=mu_x, scale=sigma_x, size=size)
+    y = np.random.normal(loc=mu_y, scale=sigma_y, size=size)
+
+    # ラジアル変位 [m]
+    r = np.sqrt(x**2 + y**2)
+    return r
+
+#==================================================================#
+# Compute intensity loss due to the atmospheric turbulence
+#==================================================================#
+def compute_intensity_loss(sigma_R_squared, size=1):
+    shape_param = np.sqrt(sigma_R_squared) 
+    
+    I_a_random = lognorm.rvs(shape_param, loc=0, scale=1, size=size)
+    
+    return I_a_random
+
+#==================================================================#
+# Compute transmissivity condidering the beam misalignemnt and spreading loss 
+# , atmospheric attenuation and turbuence
+#==================================================================#
+def compute_eta(eta_t, sigma_R_squared, theta_zen_rad, lambda_, h_s, H_g, Cn2_profile, a, r, size=1):
+    
+    # intensity loss due to the beam misalignemnt and spreading loss 
+    I_a_random = compute_intensity_loss(sigma_R_squared, size)
+    
+    # transmissivity considering 
+    eta_p = transmissivity_etap(theta_zen_rad, r)
+    
+    # transmissivity considering atmospheric attenuation
+    eta = eta_t * I_a_random * eta_p
+    
+    return eta
+
+def weather_condition(tau_zen):
+    if tau_zen == 0.91:
+        return 'Clear sky', 23000  # H_atm for clear sky
+    elif tau_zen == 0.85:
+        return 'Slightly hazy', 15000  # H_atm for slightly hazy
+    elif tau_zen == 0.75:
+        return 'Noticeably hazy', 10000  # H_atm for noticeably hazy
+    elif tau_zen == 0.53:
+        return 'Poor visibility', 5000  # H_atm for poor visibility
+    else:
+        return 'Unknown condition', 10000  # Default value
+
 
 
 def main():
     tau_zen_list = [0.91, 0.85, 0.75, 0.65]
-    theta_zen_deg_list = np.linspace(-59, 59, 200)
-
+    theta_zen_deg_list = np.linspace(-50, 50, 100)
     plt.figure(figsize=(10, 6))
 
     for tau_zen in tau_zen_list:
         qber_values = []
 
+        # Get weather condition and H_atm from tau_zen
+        weather_condition_str, H_atm = weather_condition(tau_zen)
+
         for theta_zen_deg in theta_zen_deg_list:
             theta_zen_rad = math.radians(theta_zen_deg)
-            H_atm = 20000
             LoS = satellite_ground_distance(h_s, H_g, theta_zen_rad)
+            r = compute_radial_displacement(mu_x, mu_y, angle_sigma_x, angle_sigma_y, LoS, size=1)
             w_L = compute_w_L(lambda_, theta_d_half_rad, LoS, H_atm, H_g, theta_zen_rad, Cn2_profile)
 
             qber = qner_new_infinite(theta_zen_rad, H_atm, w_L, tau_zen, LoS)
             qber_values.append(qber*100)
 
-        label = weather_condition(tau_zen) + f" (τ = {tau_zen})"
+        label = f"{weather_condition_str} (τ = {tau_zen})"
         plt.plot(theta_zen_deg_list, qber_values, label=label)
 
     # グラフ装飾
@@ -350,6 +416,7 @@ def main():
     plt.savefig(output_path)
     print(f"✅ Saved as: {output_path}")
     plt.show()
+
 
 
 if __name__ == "__main__":

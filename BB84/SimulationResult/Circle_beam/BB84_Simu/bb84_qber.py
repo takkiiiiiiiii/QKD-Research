@@ -4,23 +4,93 @@ from qiskit_aer import AerSimulator
 from qiskit_aer.noise import (NoiseModel, pauli_error)
 import time
 import socket, math
-from ave_qber_zenith import qner_new_infinite, weather_condition
+from ave_qber_zenith import *
 import numpy as np
 import os, sys
 import matplotlib.pyplot as plt
-# モジュール読み込み
-simulation_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../../', 'Model'))
-sys.path.append(simulation_path)
 
-from circle_beam_transmissivity import transmissivity_0, satellite_ground_distance, beam_waist
-from atmospheric_transmissivity import transmissivity_etat
-from qber import qber_loss
+
 
 count = 1000
 backend = AerSimulator()
 intercept_prob = 0
 # noise_prob = 0.1
 kr_efficiency = 1.22
+#=======================================================#
+#                 Fading Parameters                     #
+#=======================================================#
+#==================================================================#
+# a : Aperture of radius (Receiver radis in meters) (m)
+#==================================================================#
+a = 0.75
+
+# r = 5
+#==================================================================#
+# n_s : average number of photon
+#==================================================================#
+n_s = 0.1
+
+#==================================================================#
+# len_wave : Optical wavelength (μm)
+#==================================================================#
+lambda_ = 0.85e-6
+
+#==================================================================#
+# altitude ground station
+#==================================================================#
+H_g = 10 # (m)
+
+#==================================================================#
+# h_s : Altitude between LEO satellite and ground station (m)
+#==================================================================#
+h_s = 500e3  # 500 km
+
+#==================================================================#
+# H_a : Upper end of atmosphere (km)
+#==================================================================#
+H_atm = 200000
+
+#==================================================================#
+# theta_d_rad : Optical beam divergence angle (rad)
+#==================================================================#
+theta_d_rad = 10e-6 
+
+#==================================================================#
+# theta_d_half_rad : Optical beam half-divergence angle (rad)
+#==================================================================#
+theta_d_half_rad = theta_d_rad /2
+
+#==================================================================#
+# v_wind: wind_speed
+#==================================================================#
+v_wind = 21 
+
+#==================================================================#
+# mu_x, mu_y: Mean values of pointing error in x and y directions (m)
+#==================================================================#
+mu_x = 0
+mu_y = 0
+
+#==================================================================#
+# angle_sigma_x, angle_sigma_y: Beam jitter standard deviations of the Gaussian-distibution jitters (rad)
+#==================================================================#
+angle_sigma_x = 3e-6
+angle_sigma_y = 3e-6
+
+#=======================================================#
+# QBER parameters
+#=======================================================#
+    #=====================#
+    # n_s   : average numher of photon from Alice
+    # e_0   : the error rate of the background
+    # Y_0   : the background rate which includes the detector dark count and other background contributions
+    # P_pa  : After-pulsing probability
+    # e_pol : Probability of the polarisation errors
+    #======================#i
+e_0 = 0.5
+Y_0 = 1e-4
+P_AP = 0.02
+e_pol = 0.033
 
 
 class User:
@@ -194,58 +264,51 @@ def check_bits(b1, b2, bck):
     return check
 
 
-def calculate_pulse_rate(n_s, num_qubits):
-    return num_qubits / n_s
+def calculate_pulse_rate(n_s, raw_key_rate=6383.91):
+    return raw_key_rate / n_s
 
 
 def main():
-    num_samples = 1000
-    #==================================================================#
-    # Altitude between LEO satellite and ground station (m)
-    #==================================================================#
-    H_s = 500e3
-    #==================================================================#
-    # Altitude of ground station
-    #==================================================================#
-    H_g = 10
-    #==================================================================#
-    # Optical beam divergence angle (rad)
-    #==================================================================#
-    theta_d_rad = 10e-6 
-    #==================================================================#
-    # Beam width to jitter variance ratio 
-    #==================================================================#
-    varphi_mod = 4.3292
-    #==================================================================#
-    # Average number of photon 
-    #==================================================================#
-    n_s = 0.8
-    tau_zen_list = [0.91, 0.85, 0.75, 0.65]
-    theta_zen_deg_list = np.linspace(-60, 60, 200)
-    num_qubits = 29
-    pulse_rate = calculate_pulse_rate(n_s, num_qubits)
+    num_samples = 20
+    total_qubit = int(5000)
+    tau_zen_list = [0.91, 0.85, 0.75, 0.53]
+    # tau_zen_list = [0.91]
+
+    theta_zen_deg_list = np.linspace(-50, 50, 50)
+    num_qubits = 240
+    num_running = total_qubit/num_qubits +1
+    pulse_rate = calculate_pulse_rate(n_s)
     print(f'Pulse Rate: {pulse_rate} (pulse/sec)')
     print(f'{n_s} (photon/pulse)')
     for tau_zen in tau_zen_list:
         qber_values = []
 
+        # Get weather condition and H_atm from tau_zen
+        weather_condition_str, H_atm = weather_condition(tau_zen)
+
         for theta_zen_deg in theta_zen_deg_list:
             theta_zen_rad = math.radians(theta_zen_deg)
-            H_atm = 20000
-            waist = beam_waist(H_s, H_g, theta_zen_rad, theta_d_rad)
-            prob_error = qner_new_infinite(theta_zen_rad, H_atm, waist, tau_zen, varphi_mod, n_s, H_s, H_g)
+            LoS = satellite_ground_distance(h_s, H_g, theta_zen_rad)
+            r = compute_radial_displacement(mu_x, mu_y, angle_sigma_x, angle_sigma_y, LoS, size=1)
+            w_L = compute_w_L(lambda_, theta_d_half_rad, LoS, H_atm, H_g, theta_zen_rad, Cn2_profile)
+
+            prob_error = qner_new_infinite(theta_zen_rad, H_atm, w_L, tau_zen, LoS)
             qber_samples = []
             for _ in range(num_samples):
-                part_ka, part_kb, err_num = generate_Siftedkey(
-                    user0, user1, num_qubits, prob_error
-                )
-                qber = err_num / len(part_ka) * 100 if len(part_ka) > 0 else 0
+                total_err_num = 0
+                total_sifted_bit_length = 0
+                for _ in range(int(num_running)):
+                    part_ka, part_kb, err_num = generate_Siftedkey(
+                        user0, user1, num_qubits, prob_error
+                    )
+                    total_err_num += err_num
+                    total_sifted_bit_length += len(part_ka)    
+                qber = total_err_num / total_sifted_bit_length * 100 if len(part_ka) > 0 else 0
                 qber_samples.append(qber)
-
             avg_qber = sum(qber_samples) / len(qber_samples)
             qber_values.append(avg_qber)
 
-        label = weather_condition(tau_zen) + f" (τ = {tau_zen})"
+        label = f"{weather_condition_str} (τ = {tau_zen})"
         plt.plot(theta_zen_deg_list, qber_values, label=label)
 
     plt.xlabel(r"Zenith angle $\theta_{\mathrm{zen}}$ [deg]", fontsize=20)

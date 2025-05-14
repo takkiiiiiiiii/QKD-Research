@@ -14,12 +14,14 @@ from circle_beam_transmissivity import satellite_ground_distance
 #==================================================================#
 # a : Aperture of radius (Receiver radis in meters) (m)
 #==================================================================#
+# a = 0.07920
 a = 0.75
+# a = 0.11672
 
 # #==================================================================#
 # # r : Radial jitter distance (m)
 # #==================================================================#
-r = 3
+# r = 3
 
 # #==================================================================#
 # # len_wave : Optical wavelength (μm)
@@ -34,22 +36,22 @@ H_g = 10 # (m)
 # #==================================================================#
 # # h_s : Altitude between LEO satellite and ground station (m)
 # #==================================================================#
-h_s = 550e3  # 500 km
+h_s = 550e3  # 550 km
 
 # #==================================================================#
 # # tau_zen : Transmission efficiency at zenith
 # #==================================================================#
-tau_zen = 0.85  # 天頂方向での大気透過率
+tau_zen = 0.91  # 天頂方向での大気透過率
 
 # #==================================================================#
 # # theta_zen_rad : Zenith angle (rad)
 # #==================================================================#
-theta_zen_rad = math.radians(40)
+theta_zen_rad = math.radians(20)
 
 # #==================================================================#
 # # theta_d_rad : Optical beam divergence angle (rad)
 # #==================================================================#
-theta_d_rad =20e-6 
+theta_d_rad =10e-6 
 
 # #==================================================================#
 # # v_wind: wind_speed
@@ -83,10 +85,9 @@ theta_d_half_rad = theta_d_rad / 2
 def compute_w_L(lambda_, theta_d_half_rad, L, H_atm, H_OGS, theta_zen_rad, cn2_profile):
     k = 2 * math.pi / lambda_
 
-    w_0 = lambda_ / (math.pi * theta_d_half_rad)
+    w_0 = lambda_ * (math.pi * theta_d_half_rad)**-1
 
     W = w_0 * math.sqrt(1 + (2 * L) / (k * w_0**2))
-    print(W)
 
     def integrand(h):
         return cn2_profile(h) * ((h - H_OGS) / (H_atm - H_OGS))**(5/3)
@@ -152,7 +153,7 @@ def rytov_variance(len_wave, theta_zen_rad, H_OGS, H_atm, Cn2_profile):
     return sigma_R_squared
 
 
-def cn2_profile(h, v_wind=21, Cn2_0=1e-13):
+def cn2_profile(h, v_wind=21, Cn2_0=1e-15):
     term1 = 0.00594 * (v_wind / 27)**2 * (1e-5 * h)**10 * np.exp(-h / 1000)
     term2 = 2.7e-16 * np.exp(-h / 1500)
     term3 = Cn2_0 * np.exp(-h / 100)
@@ -170,6 +171,7 @@ def compute_sigma_mod(mu_x, mu_y, sigma_x, sigma_y):
     sigma_mod = (numerator / 2) ** (1/3)
     return sigma_mod
 
+
 # Equivalent Beam Width
 def equivalent_beam_width_squared(a, w_L):
     nu = (math.sqrt(math.pi) * a) / (math.sqrt(2) * w_L)
@@ -177,6 +179,7 @@ def equivalent_beam_width_squared(a, w_L):
     denominator = 2 * nu * math.exp(-nu**2)
     w_Leq_squared = w_L**2 * (numerator / denominator)
     return w_Leq_squared
+
 
 # Calculate varphi_mod
 def varphi_mod(w_Leq_squared, sigma_mod):
@@ -204,11 +207,12 @@ def to_decimal_string(x, precision=100):
 def main():
     # beam propagation distance
     LoS = satellite_ground_distance(h_s, H_g, theta_zen_rad)
+    print(LoS)
     # beam jitter param
     mu_y = 0
     mu_x = 0
-    angle_sigma_x = 3e-6
-    angle_sigma_y = 3e-6
+    angle_sigma_x = 3.3e-6
+    angle_sigma_y = 3.3e-6
     sigma_x = angle_sigma_x * LoS
     sigma_y = angle_sigma_y * LoS
 
@@ -223,7 +227,7 @@ def main():
     varphi_mod = sigma_to_variance(sigma_mod, w_Leq)
 
     print(f"Aparture radius:                  {a} [m]")
-    print(f"Receiver's Beam footprint radius: {w_L:.3e} [m]")
+    print(f"Receiver's Beam width:            {w_L:.3e} [m]")
     print(f"Equivalent Beam width:            {math.sqrt(w_Leq_squared):.3e} [m]")
     print(f"sigma_mod:                        {sigma_mod:.3e} [m]")
     print(f"w_Leq_squared:                    {w_Leq_squared:.3e} [m^2]")
