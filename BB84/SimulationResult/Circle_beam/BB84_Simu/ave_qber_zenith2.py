@@ -259,15 +259,15 @@ def qber_loss(eta, n_s):
 
 def weather_condition(tau_zen):
     if tau_zen == 0.91:
-        return 'Clear sky', 23000  # H_atm for clear sky
+        return 'Clear sky'
     elif tau_zen == 0.85:
-        return 'Slightly hazy', 15000  # H_atm for slightly hazy
+        return 'Slightly hazy'
     elif tau_zen == 0.75:
-        return 'Noticeably hazy', 10000  # H_atm for noticeably hazy
+        return 'Noticeably hazy'
     elif tau_zen == 0.53:
-        return 'Poor visibility', 5000  # H_atm for poor visibility
+        return 'Poor visibility'
     else:
-        return 'Unknown condition', 10000  # Default value
+        return 'Unknown condition'
     
 
 def main():
