@@ -43,7 +43,7 @@ H_g = 10 # (m)
 #==================================================================#
 # h_s : Altitude between LEO satellite and ground station (m)
 #==================================================================#
-h_s = 500e3  # 500 km
+h_s = 550e3  # 500 km
 
 #==================================================================#
 # H_a : Upper end of atmosphere (km)
@@ -53,7 +53,7 @@ H_atm = 200000
 #==================================================================#
 # theta_d_rad : Optical beam divergence angle (rad)
 #==================================================================#
-theta_d_rad = 10e-6 
+theta_d_rad = 20e-6 
 
 #==================================================================#
 # theta_d_half_rad : Optical beam half-divergence angle (rad)
@@ -74,8 +74,8 @@ mu_y = 0
 #==================================================================#
 # angle_sigma_x, angle_sigma_y: Beam jitter standard deviations of the Gaussian-distibution jitters (rad)
 #==================================================================#
-angle_sigma_x = 3e-6
-angle_sigma_y = 3e-6
+# angle_sigma_x = 5e-6
+# angle_sigma_y = 5e-6
 
 #=======================================================#
 # QBER parameters
@@ -128,7 +128,8 @@ def generate_Siftedkey(user0, user1, num_qubits, ave_qber):
     ae_basis, ae_match = check_bases(alice_basis, eve_basis)
 
     # Apply the quantum error chanel
-    noise_model = apply_noise_model(ave_qber)
+    if ave_qber>0:
+        noise_model = apply_noise_model(ave_qber)
 
     # Bob measures Alice's qubit
     qc, bob_bits = bob_measurement(qc, bob_basis, noise_model)
@@ -269,20 +270,18 @@ def calculate_pulse_rate(n_s, raw_key_rate=6383.91):
 
 
 def main():
-    num_samples = 20
-    total_qubit = int(5000)
-    tau_zen_list = [0.91, 0.85, 0.75, 0.53]
-    # tau_zen_list = [0.91]
-
-    theta_zen_deg_list = np.linspace(-50, 50, 50)
-    num_qubits = 240
+    num_samples = 2
+    total_qubit = int(10000)
+    tau_zen_list = [0.91, 0.85, 0,75, 0.53]
+    theta_zen_deg_list = np.linspace(-50, 50, 10)
+    num_qubits = 250
     num_running = total_qubit/num_qubits +1
     pulse_rate = calculate_pulse_rate(n_s)
     print(f'Pulse Rate: {pulse_rate} (pulse/sec)')
     print(f'{n_s} (photon/pulse)')
     for tau_zen in tau_zen_list:
         qber_values = []
-
+        print(tau_zen)
         # Get weather condition and H_atm from tau_zen
         weather_condition_str, H_atm = weather_condition(tau_zen)
 
@@ -291,7 +290,7 @@ def main():
             LoS = satellite_ground_distance(h_s, H_g, theta_zen_rad)
             r = compute_radial_displacement(mu_x, mu_y, angle_sigma_x, angle_sigma_y, LoS, size=1)
             w_L = compute_w_L(lambda_, theta_d_half_rad, LoS, H_atm, H_g, theta_zen_rad, Cn2_profile)
-
+            print(w_L)
             prob_error = qner_new_infinite(theta_zen_rad, H_atm, w_L, tau_zen, LoS)
             qber_samples = []
             for _ in range(num_samples):

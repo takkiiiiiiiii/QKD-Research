@@ -19,11 +19,6 @@ a = 0.75
 # a = 0.11672
 
 # #==================================================================#
-# # r : Radial jitter distance (m)
-# #==================================================================#
-# r = 3
-
-# #==================================================================#
 # # len_wave : Optical wavelength (μm)
 # #==================================================================#
 lambda_ = 0.85e-6
@@ -53,6 +48,11 @@ theta_zen_rad = math.radians(20)
 # #==================================================================#
 theta_d_rad =10e-6 
 
+#==================================================================#
+# theta_d_half_rad: beam divergence half-angle
+#==================================================================#
+theta_d_half_rad = theta_d_rad / 2
+
 # #==================================================================#
 # # v_wind: wind_speed
 # #==================================================================#
@@ -71,26 +71,17 @@ H_atm = 20e3
 
 
 #==================================================================#
-# mu_x, mu_y, sigma_x, sigma_y
-#==================================================================#
-# mu_y = 0
-# mu_x = 0
-# sigma_x = 3e-6
-# sigma_y = 3e-6
-
-theta_d_half_rad = theta_d_rad / 2
-# theta_d_half_rad = 16.5e-6
-
 # Beam footprint radius at receiver including turbulence
-def compute_w_L(lambda_, theta_d_half_rad, L, H_atm, H_OGS, theta_zen_rad, cn2_profile):
+#==================================================================#
+def compute_w_L(lambda_, theta_d_half_rad, L, H_atm, H_OGS, theta_zen_rad, Cn2_profile):
     k = 2 * math.pi / lambda_
 
-    w_0 = lambda_ * (math.pi * theta_d_half_rad)**-1
+    w_0 = lambda_ / (math.pi * theta_d_half_rad)
 
     W = w_0 * math.sqrt(1 + (2 * L) / (k * w_0**2))
 
     def integrand(h):
-        return cn2_profile(h) * ((h - H_OGS) / (H_atm - H_OGS))**(5/3)
+        return Cn2_profile(h) * ((h - H_OGS) / (H_atm - H_OGS))**(5/3)
 
     # integral_result, _ = quad(integrand, H_OGS, H_atm)
     integral_result, _ = quad(integrand, H_OGS, H_atm)
@@ -104,63 +95,18 @@ def compute_w_L(lambda_, theta_d_half_rad, L, H_atm, H_OGS, theta_zen_rad, cn2_p
     w_L = W * math.sqrt(1 + T)
     return w_L
 
-
-# calculate modified beam-jitter variance approximation
-def approximate_jitter_variance(mu_x, mu_y, sigma_x, sigma_y):
-    numerator = (
-        3 * mu_x**2 * sigma_x**4 +
-        3 * mu_y**2 * sigma_y**4 +
-        sigma_x**6 +
-        sigma_y**6
-    )
-    sigma_mod_value = (numerator / 2) ** (1/3)
-    return sigma_mod_value
-
-# calculate the ratios between the equivalent beam-width and (modified) beam-jitter variances
-def sigma_to_variance(sigma, waist):
-    variance = waist/2*sigma
-    return variance
-
-# calculate the modified fracton of collected power over the receiving aparture when there is no pointing error
-def mod_jitter(mu_x, mu_y, sigma_x, sigma_y, waist):
-    A_0 = transmissivity_0(a, waist)
-    varphi_x = sigma_to_variance(sigma_x, waist)
-    varphi_y = sigma_to_variance(sigma_y, waist)
-    sigma_mod = approximate_jitter_variance(mu_x, mu_y, sigma_x, sigma_y)
-    varphi_mod = sigma_to_variance(sigma_mod, waist)
-    term1 = 1 / (varphi_mod ** 2)
-    term2 = 1 / (2 * varphi_x ** 2)
-    term3 = 1 / (2 * varphi_y ** 2)
-    term4 = mu_x**2 / (2 * sigma_x ** 2 * varphi_x ** 2)
-    term5 = mu_y**2 / (2 * sigma_y ** 2 * varphi_y ** 2)
-    exponent = term1 - term2 - term3 - term4 - term5
-    A_mod = A_0 * np.exp(exponent)
-    return A_mod
-
-
-# Compute Rytov variance σ_R^2 for atmospheric turbulence.
-def rytov_variance(len_wave, theta_zen_rad, H_OGS, H_atm, Cn2_profile):
-    k = 2 * np.pi / len_wave
-    sec_zenith = 1 / np.cos(theta_zen_rad)
-
-    def integrand(h):
-        return Cn2_profile(h) * (h - H_OGS)**(5/6)
-
-    integral, _ = quad(integrand, H_OGS, H_atm, limit=100, epsabs=1e-9, epsrel=1e-9)
-
-    sigma_R_squared = 2.25 * (k)**(7/6) * sec_zenith**(11/6) * integral
-
-    return sigma_R_squared
-
-
-def cn2_profile(h, v_wind=21, Cn2_0=1e-15):
+#==================================================================#
+# Hufnagel-Valley model
+#==================================================================#
+def Cn2_profile(h, v_wind=21, Cn2_0=1e-13):
     term1 = 0.00594 * (v_wind / 27)**2 * (1e-5 * h)**10 * np.exp(-h / 1000)
     term2 = 2.7e-16 * np.exp(-h / 1500)
     term3 = Cn2_0 * np.exp(-h / 100)
-    return term1 + term2 + term3
+    return 0.2*term1 + term2 + term3
 
-
+#==================================================================#
 # Calculate sigma_mod
+#==================================================================#
 def compute_sigma_mod(mu_x, mu_y, sigma_x, sigma_y):
     numerator = (
         3 * mu_x**2 * sigma_x**4 +
@@ -171,33 +117,25 @@ def compute_sigma_mod(mu_x, mu_y, sigma_x, sigma_y):
     sigma_mod = (numerator / 2) ** (1/3)
     return sigma_mod
 
-
-# Equivalent Beam Width
+#==================================================================#
+# Compute equivalent Beam Width
+#==================================================================#
 def equivalent_beam_width_squared(a, w_L):
+    # w_L: beam radius at receiver before aperture clipping
     nu = (math.sqrt(math.pi) * a) / (math.sqrt(2) * w_L)
     numerator = math.sqrt(math.pi) * erf(nu)
     denominator = 2 * nu * math.exp(-nu**2)
-    w_Leq_squared = w_L**2 * (numerator / denominator)
-    return w_Leq_squared
+    return w_L**2 * (numerator / denominator)
 
 
-# Calculate varphi_mod
-def varphi_mod(w_Leq_squared, sigma_mod):
-    w_Leq = math.sqrt(w_Leq_squared)
-    return w_Leq / (2 * sigma_mod)
+#==================================================================#
+# calculate the ratios between the equivalent beam-width and (modified) beam-jitter variances
+#==================================================================#
+def sigma_to_variance(sigma, w_Leq):
+    variance = w_Leq/2*sigma
+    return variance
 
-# Calculate the fading loss value
-def fading_loss(eta, mu_x, mu_y, sigma_x, sigma_y, theta_zen_rad, H_atm, waist):
-    eta_t = transmissivity_etat(tau_zen, theta_zen_rad)
-    sigma_R_squared = rytov_variance(lambda_, theta_zen_rad, H_g, H_atm, cn2_profile)
-    A_mod = mod_jitter(mu_x, mu_y, sigma_x, sigma_y, waist)
-    mu = sigma_R_squared/2 * (1+2*varphi_mod**2)
-    term1 = (varphi_mod**2) / (2 * (A_mod * eta_t)**(varphi_mod**2))
-    term2 = eta ** (varphi_mod**2 - 1)
-    term3 = erfc((np.log((eta / (A_mod * eta_t))) + mu) / (np.sqrt(2) * math.sqrt(sigma_R_squared)))
-    term4 = np.exp(((sigma_R_squared/2) * varphi_mod**2 * (1 + varphi_mod**2)))
-    eta_f = term1 * term2 * term3 * term4
-    return eta_f
+
 
 def to_decimal_string(x, precision=100):
     if x == 0:
@@ -208,15 +146,14 @@ def main():
     # beam propagation distance
     LoS = satellite_ground_distance(h_s, H_g, theta_zen_rad)
     print(LoS)
-    # beam jitter param
     mu_y = 0
     mu_x = 0
-    angle_sigma_x = 3.3e-6
-    angle_sigma_y = 3.3e-6
+    angle_sigma_x = 3e-6
+    angle_sigma_y = 3e-6
     sigma_x = angle_sigma_x * LoS
     sigma_y = angle_sigma_y * LoS
 
-    w_L = compute_w_L(lambda_, theta_d_half_rad, LoS, H_atm, H_g, theta_zen_rad, cn2_profile)
+    w_L = compute_w_L(lambda_, theta_d_half_rad, LoS, H_atm, H_g, theta_zen_rad, Cn2_profile)
 
     sigma_mod = compute_sigma_mod(mu_x, mu_y, sigma_x, sigma_y)
 

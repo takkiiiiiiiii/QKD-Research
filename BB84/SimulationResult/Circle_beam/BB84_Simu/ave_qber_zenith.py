@@ -8,13 +8,6 @@ import matplotlib.pyplot as plt
 from scipy.integrate import quad
 import os, sys
 
-# モジュール読み込み
-simulation_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../../', 'Model'))
-sys.path.append(simulation_path)
-
-from atmospheric_transmissivity import transmissivity_etat
-
-
 #=======================================================#
 #                 Fading Parameters                     #
 #=======================================================#
@@ -28,7 +21,7 @@ a = 0.75
 #==================================================================#
 # n_s : average number of photon
 #==================================================================#
-n_s = 0.1
+n_s = 0.8
 
 #==================================================================#
 # len_wave : Optical wavelength (μm)
@@ -53,7 +46,7 @@ H_atm = 200000
 #==================================================================#
 # theta_d_rad : Optical beam divergence angle (rad)
 #==================================================================#
-theta_d_rad = 10e-6 
+theta_d_rad = 20e-6 
 
 #==================================================================#
 # theta_d_half_rad : Optical beam half-divergence angle (rad)
@@ -74,8 +67,10 @@ mu_y = 0
 #==================================================================#
 # angle_sigma_x, angle_sigma_y: Beam jitter standard deviations of the Gaussian-distibution jitters (rad)
 #==================================================================#
-angle_sigma_x = 3e-6
-angle_sigma_y = 3e-6
+# angle_sigma_x = theta_d_half_rad /2
+# angle_sigma_y = theta_d_half_rad /2
+angle_sigma_x = theta_d_half_rad / 3
+angle_sigma_y = theta_d_half_rad / 3
 
 #=======================================================#
 # QBER parameters
@@ -125,32 +120,32 @@ def satellite_ground_distance(h_s, H_g, theta_zen_rad):
     return (h_s - H_g) / math.cos(theta_zen_rad)
 
 
+def transmissivity_etal(tau_zen, theta_zen_rad):
+    tau_atm = tau_zen ** (1 / math.cos(theta_zen_rad))
+    return tau_atm
+
+
 def fading_loss(eta, mu_x, mu_y, sigma_x, sigma_y, theta_zen_rad, H_atm, w_L, w_Leq, tau_zen, varphi_mod):
-    eta_t = transmissivity_etat(tau_zen, theta_zen_rad)
+    eta_l = transmissivity_etal(tau_zen, theta_zen_rad)
     sigma_R_squared = rytov_variance(lambda_, theta_zen_rad, H_g, H_atm, Cn2_profile)
+    # print(f'sigma_R_squared : {sigma_R_squared}')
 
     A_mod = mod_jitter(mu_x, mu_y, sigma_x, sigma_y, w_L, w_Leq)
     mu = sigma_R_squared / 2 * (1 + 2 * varphi_mod**2)
     
-    # Debugging print to check values
-    # print(f"theta_zen_rad: {theta_zen_rad} radians ({np.degrees(theta_zen_rad)} degrees)")
-    # print(f"varphi_mod: {varphi_mod}")
-    # print(f"sigma_R_squared: {sigma_R_squared}")
-    
-    term1 = (varphi_mod**2) / (2 * (A_mod * eta_t)**(varphi_mod**2))
-    term2 = eta ** (varphi_mod**2 - 1)
-    term3 = erfc((np.log((eta / (A_mod * eta_t))) + mu) / (np.sqrt(2) * math.sqrt(sigma_R_squared)))
+    term1 = (varphi_mod**2) / (2 * (A_mod * eta_l)**(varphi_mod**2))
+    term2 = eta ** (varphi_mod**2-1)
+    term3 = erfc((np.log((eta / (A_mod * eta_l))) + mu) / (np.sqrt(2) * math.sqrt(sigma_R_squared)))
     
     # Check for overflow possibility in term4
     exponent = (sigma_R_squared / 2) * varphi_mod**2 * (1 + varphi_mod**2)
     # print(f"Exponent for term4: {exponent}")
     
-    # Check if exponent is too large
     if exponent > 700:  # Avoid overflow
         print(f"Warning: Exponent is too large, term4 will overflow. Exponent value: {exponent}")
     
     term4 = np.exp(np.clip(exponent, None, 700))  # Limit the exponent to avoid overflow
-    print(exponent)
+    # print(exponent)
     eta_f = term1 * term2 * term3 * term4
     return eta_f
 
@@ -280,9 +275,9 @@ def qber_loss(eta, n_s):
 # Compute eta_p : beam misalignment and spreading loss
 #==================================================================#
 def transmissivity_etap(theta_zen_rad, r):
-    Los = satellite_ground_distance(h_s, H_g, theta_zen_rad)
+    LoS = satellite_ground_distance(h_s, H_g, theta_zen_rad)
 
-    w_L = compute_w_L(lambda_, theta_d_half_rad, Los, H_atm, H_g, theta_zen_rad, Cn2_profile)
+    w_L = compute_w_L(lambda_, theta_d_half_rad, LoS, H_atm, H_g, theta_zen_rad, Cn2_profile)
 
     w_Leq_squared = equivalent_beam_width_squared(a, w_L)
     nu = (math.sqrt(math.pi) * a) / (math.sqrt(2) * w_L)
@@ -308,11 +303,6 @@ def maxmum_fracrion_A0(w_L):
 # h_s         : Satellite's altitude (m)
 #==================================================================#
 def qner_new_infinite(theta_zen_rad, H_atm, w_L, tau_zen, LoS):
-    # beam propagation distance
-    # mu_y = 0
-    # mu_x = 0
-    # angle_sigma_x = 3e-6
-    # angle_sigma_y = 3e-6
     sigma_x = angle_sigma_x * LoS
     sigma_y = angle_sigma_y * LoS
 
@@ -384,7 +374,7 @@ def weather_condition(tau_zen):
 
 def main():
     tau_zen_list = [0.91, 0.85, 0.75, 0.53]
-    theta_zen_deg_list = np.linspace(-50, 50, 100)
+    theta_zen_deg_list = np.linspace(-40, 40, 100)
     plt.figure(figsize=(10, 6))
 
     for tau_zen in tau_zen_list:
@@ -392,12 +382,21 @@ def main():
 
         # Get weather condition and H_atm from tau_zen
         weather_condition_str, H_atm = weather_condition(tau_zen)
-
+        
         for theta_zen_deg in theta_zen_deg_list:
-            theta_zen_rad = math.radians(theta_zen_deg)
+            if theta_zen_deg < 0:
+                theta_zen_rad = np.radians(-theta_zen_deg)
+            else:
+                theta_zen_rad = np.radians(theta_zen_deg)
+            # print(theta_zen_deg)
             LoS = satellite_ground_distance(h_s, H_g, theta_zen_rad)
+            # print(f'LoS: {LoS}')
+            # print(h_s)
+            # print(H_g)
+            # print(theta_zen_rad)
             r = compute_radial_displacement(mu_x, mu_y, angle_sigma_x, angle_sigma_y, LoS, size=1)
             w_L = compute_w_L(lambda_, theta_d_half_rad, LoS, H_atm, H_g, theta_zen_rad, Cn2_profile)
+            # print(f'w_L: {w_L}')
 
             qber = qner_new_infinite(theta_zen_rad, H_atm, w_L, tau_zen, LoS)
             qber_values.append(qber*100)
@@ -407,7 +406,7 @@ def main():
 
     # グラフ装飾
     plt.xlabel(r"Zenith angle $\theta_{\mathrm{zen}}$ [deg]", fontsize=20)
-    plt.ylabel(r"QBER (Quantum Bit Error Rate) [%]", fontsize=20)
+    plt.ylabel(r"Probability Error[%]", fontsize=20)
     plt.title("QBER vs Zenith Angle for Various Weather Conditions", fontsize=20)
     plt.grid(True)
     plt.legend(fontsize=12)
