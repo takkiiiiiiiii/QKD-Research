@@ -269,7 +269,7 @@ def main():
     plt.figure(figsize=(10, 6))
 
     for tau_zen in tau_zen_list:
-        pulserate_values = []
+        skr_pulse_list = []
 
         # Get weather condition and H_atm from tau_zen
         weather_condition_str = weather_condition(tau_zen)
@@ -284,22 +284,23 @@ def main():
             waist = beam_waist(h_s, H_g, theta_zen_rad, theta_d_half_rad)
             qber, param_q = qner_new_infinite(theta_zen_rad, H_atm, waist, tau_zen, LoS)
             # qber = qner_new_infinite(theta_zen_rad, H_atm, waist, tau_zen, LoS)
-            print(qber)
-            print(f'param_q: {param_q}')
+        
            
             # prob_error = qber_loss(insta_eta, n_s)
             secret_keyrate = compute_secret_keyrate(qber, param_q, sifting_coefficient, p_estimation, kr_efficiency)
-            pulserate = secret_keyrate / 1e-4
-            pulserate_values.append(pulserate)
+            skr_pulse = secret_keyrate / 1e-4
+            skr_pulse_list.append(skr_pulse)
 
         label = weather_condition_str + f" (τ = {tau_zen})"
-        plt.plot(theta_zen_deg_list, pulserate_values, label=label)
+        plt.plot(theta_zen_deg_list, skr_pulse_list, label=label)
         
 
-    plt.xlabel("Zenith angle (degrees)", fontsize=20)
-    plt.ylabel("Secret Keyrate(bit/pulse)", fontsize=20)
-    plt.title("Secret Keyrate vs Zenith Angle" + f" $(n_s = {n_s})$", fontsize=20)
-
+    # plt.xlabel("Zenith angle (degrees)", fontsize=20)
+    # plt.ylabel("Secret Keyrate(bit/pulse)", fontsize=20)
+    # plt.title("Secret Keyrate vs Zenith Angle" + f" $(n_s = {n_s})$", fontsize=20)
+    plt.xlabel(r"Zenith angle (degrees)", fontsize=20)
+    plt.ylabel(r"Secret key rate ($\mathrm{bit/pulse}$), from bps $\div 10^4$", fontsize=16)
+    plt.title(r"Secret Key Rate per Pulse ($\mathrm{bit/pulse}$) vs Zenith Angle" + f" $(n_s = {n_s})$", fontsize=16)
     plt.grid(True)
     plt.xticks(fontsize=20)
     plt.yticks(fontsize=20)
@@ -308,6 +309,7 @@ def main():
     formatter = ScalarFormatter(useMathText=True)
     formatter.set_powerlimits((-3, 3))  # 指数表示の範囲設定（例: 1e-3 〜 1e+3）
     ax.yaxis.set_major_formatter(formatter)
+    ax.yaxis.get_offset_text().set_fontsize(20)
     output_path = os.path.join(os.path.dirname(__file__), f'skr_per_pulse_vs_zenith_all_conditions_{n_s}.png')
     plt.savefig(output_path)
     print(f"✅ Saved as: {output_path}")

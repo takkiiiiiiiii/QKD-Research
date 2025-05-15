@@ -24,7 +24,7 @@ a = 0.75
 #==================================================================#
 # n_s : average number of photon
 #==================================================================#
-n_s = 0.8
+n_s = 0.1
 
 #==================================================================#
 # len_wave : Optical wavelength (μm)
@@ -291,6 +291,7 @@ def main():
     formatter = ScalarFormatter(useMathText=True)
     formatter.set_powerlimits((-3, 3))  # 指数表示の範囲設定（例: 1e-3 〜 1e+3）
     ax.yaxis.set_major_formatter(formatter)
+    ax.yaxis.get_offset_text().set_fontsize(20)
     output_path = os.path.join(os.path.dirname(__file__), f'skr_vs_zenith_all_conditions_{n_s}.png')
     plt.savefig(output_path)
     print(f"✅ Saved as: {output_path}")
