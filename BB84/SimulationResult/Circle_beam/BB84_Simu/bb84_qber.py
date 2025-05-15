@@ -277,8 +277,8 @@ def main():
     theta_zen_deg_list = np.linspace(-60, 60, 20)
     num_qubits = 1000
     num_running = total_qubit/num_qubits
-    pulse_rate = calculate_pulse_rate(n_s)
     for n_s in n_s_list:
+        pulse_rate = calculate_pulse_rate(n_s)
         print(f'Pulse Rate: {pulse_rate} (pulse/sec)')
         print(f'{n_s} (photon/pulse)')
         for tau_zen in tau_zen_list:
