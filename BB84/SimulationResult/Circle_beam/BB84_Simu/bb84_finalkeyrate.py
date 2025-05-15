@@ -4,7 +4,7 @@ from qiskit_aer import AerSimulator
 from qiskit_aer.noise import (NoiseModel, pauli_error)
 import time
 import socket, math
-from ave_qber_zenith import *
+from qber_zenith import *
 import numpy as np
 import os, sys
 import matplotlib.pyplot as plt
@@ -53,7 +53,7 @@ H_atm = 200000
 #==================================================================#
 # theta_d_rad : Optical beam divergence angle (rad)
 #==================================================================#
-theta_d_rad = 10e-6 
+theta_d_rad = 20e-6 
 
 #==================================================================#
 # theta_d_half_rad : Optical beam half-divergence angle (rad)
@@ -74,8 +74,8 @@ mu_y = 0
 #==================================================================#
 # angle_sigma_x, angle_sigma_y: Beam jitter standard deviations of the Gaussian-distibution jitters (rad)
 #==================================================================#
-angle_sigma_x = 3e-6
-angle_sigma_y = 3e-6
+angle_sigma_x = theta_d_half_rad/5
+angle_sigma_y = theta_d_half_rad/5
 
 #=======================================================#
 # QBER parameters
@@ -302,7 +302,7 @@ def main():
             theta_zen_rad = math.radians(theta_zen_deg)
             LoS = satellite_ground_distance(h_s, H_g, theta_zen_rad)
             r = compute_radial_displacement(mu_x, mu_y, angle_sigma_x, angle_sigma_y, LoS, size=1)
-            w_L = compute_w_L(lambda_, theta_d_half_rad, LoS, H_atm, H_g, theta_zen_rad, Cn2_profile)
+            w_L = beam_waist(h_s, H_g, theta_zen_rad, theta_d_half_rad)
 
             final_keyrate_samples = []
             prob_error = qner_new_infinite(theta_zen_rad, H_atm, w_L, tau_zen, LoS)
