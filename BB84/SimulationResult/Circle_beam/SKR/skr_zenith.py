@@ -5,12 +5,12 @@ from scipy.special import erfc
 from scipy.special import erf
 from scipy.stats import lognorm
 import matplotlib.pyplot as plt
-from scipy.integrate import quad
-import os, sys
+from matplotlib.ticker import ScalarFormatter
 
-# モジュール読み込み
-simulation_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../../', 'Model'))
-sys.path.append(simulation_path)
+from scipy.integrate import quad
+from secretkeyrate import compute_secret_keyrate
+import os
+
 
 #=======================================================#
 #                 Fading Parameters                     #
@@ -18,13 +18,10 @@ sys.path.append(simulation_path)
 #==================================================================#
 # a : Aperture of radius (Receiver radis in meters) (m)
 #==================================================================#
+# a = 0.07920
 a = 0.75
 
-#==================================================================#
-# varphi_mod
-#==================================================================#
-# varphi_mod = 4.3292
-
+varphi_mod = 4.3292
 #==================================================================#
 # n_s : average number of photon
 #==================================================================#
@@ -43,45 +40,27 @@ H_g = 10 # (m)
 #==================================================================#
 # h_s : Altitude between LEO satellite and ground station (m)
 #==================================================================#
-h_s = 550e3  # 550 km
+h_s = 550e3  # 500 km
 
 #==================================================================#
 # H_a : Upper end of atmosphere (km)
 #==================================================================#
-H_atm = 200000 # 20 km
-
-#==================================================================#
-# tau_zen : Transmission efficiency at zenith
-#==================================================================#
-# tau_zen = 0.91  # 天頂方向での大気透過率
-
-#==================================================================#
-# theta_zen_rad : Zenith angle (rad)
-#==================================================================#
-# theta_zen_rad = math.radians(10)
+H_atm = 20000
 
 #==================================================================#
 # theta_d_rad : Optical beam divergence angle (rad)
 #==================================================================#
 theta_d_rad = 20e-6 
 
-theta_d_half_rad = 10e-6
+#==================================================================#
+# theta_d_half_rad : Optical beam half-divergence angle (rad)
+#==================================================================#
+theta_d_half_rad = theta_d_rad /2
 
 #==================================================================#
 # v_wind: wind_speed
 #==================================================================#
 v_wind = 21 
-#==================================================================#
-# the maximum vertical altitude of atmosphere scaled from maximum 
-# slant path h_slant,max over the atmosphere at minimum zenith angle
-# atomospheric altitude
-#==================================================================#
-# H_atm = 20000*math.cos(theta_zen_rad) 
-
-#==================================================================#
-# waist : Beam waist radius at receiver (m)
-#==================================================================#
-# waist = beam_waist(h_s, H_g, theta_zen_rad, theta_d_rad)
 
 #=======================================================#
 # QBER parameters
@@ -97,6 +76,18 @@ e_0 = 0.5
 Y_0 = 1e-4
 P_AP = 0.02
 e_pol = 0.033
+
+#=======================================================#
+# Final key settings
+#=======================================================#
+    #=====================#
+    # sifting_coefficient: sifting efficiency
+    # p: Parameter estimation coefficient
+    # f: Key reconciliation efficiency 
+    #======================#i
+sifting_coefficient = 0.5
+p_estimation = 0.75
+kr_efficiency = 1.22
 
 
 def transmissivity_etal(tau_zen, theta_zen_rad):
@@ -126,8 +117,8 @@ def approximate_jitter_variance(mu_x, mu_y, sigma_x, sigma_y):
     return sigma_mod_value
 
 # calculate the ratios between the equivalent beam-width and (modified) beam-jitter variances
-def compute_varphi_mod(sigma, w_Leq):
-    variance = w_Leq/(2*sigma)
+def sigma_to_variance(sigma, w_Leq):
+    variance = w_Leq/2*sigma
     return variance
 
 def maxmum_fracrion_A0(w_L):
@@ -139,10 +130,11 @@ def maxmum_fracrion_A0(w_L):
 # calculate the modified fracton of collected power over the receiving aparture when there is no pointing error
 def mod_jitter(mu_x, mu_y, sigma_x, sigma_y, w_L, w_Leq):
     A_0 = maxmum_fracrion_A0(w_L)
-    varphi_x = compute_varphi_mod(sigma_x, w_Leq)
-    varphi_y = compute_varphi_mod(sigma_y, w_Leq)
-    sigma_mod = approximate_jitter_variance(mu_x, mu_y, sigma_x, sigma_y)
-    varphi_mod = compute_varphi_mod(sigma_mod, w_Leq)
+
+    varphi_x = sigma_to_variance(sigma_x, w_Leq)
+    varphi_y = sigma_to_variance(sigma_y, w_Leq)
+    # sigma_mod = approximate_jitter_variance(mu_x, mu_y, sigma_x, sigma_y)
+    varphi_mod = 4.3292
     term1 = 1 / (varphi_mod ** 2)
     term2 = 1 / (2 * varphi_x ** 2)
     term3 = 1 / (2 * varphi_y ** 2)
@@ -167,10 +159,6 @@ def rytov_variance(len_wave, theta_zen_rad, H_OGS, H_atm, Cn2_profile):
 
     return sigma_R_squared
 
-# def simple_cn2_profile(h):
-#     """ A simple model for Cn^2(h) [m^-2/3] """
-#     return 1e-14 * np.exp(-h / 1000) 
-
 def cn2_profile(h, v_wind=21, Cn2_0=1e-13):
     term1 = 0.00594 * (v_wind / 27)**2 * (1e-5 * h)**10 * np.exp(-h / 1000)
     term2 = 2.7e-16 * np.exp(-h / 1500)
@@ -182,11 +170,9 @@ def cn2_profile(h, v_wind=21, Cn2_0=1e-13):
 def fading_loss(gamma, mu_x, mu_y, sigma_x, sigma_y, theta_zen_rad, H_atm, w_L,w_Leq, tau_zen):
     eta_t = transmissivity_etal(tau_zen, theta_zen_rad)
     sigma_R_squared = rytov_variance(lambda_, theta_zen_rad, H_g, H_atm, cn2_profile)
-    sigma_mod = approximate_jitter_variance(mu_x, mu_y, sigma_x, sigma_y)
-    # varphi_mod = 4.3292
-    varphi_mod = compute_varphi_mod(sigma_mod, w_Leq)
+    varphi_mod = 4.3292
     A_mod = mod_jitter(mu_x, mu_y, sigma_x, sigma_y, w_L, w_Leq)
-    mu = sigma_R_squared/2 * (1+(2*varphi_mod**2))
+    mu = sigma_R_squared/2 * (1+2*varphi_mod**2)
     term1 = (varphi_mod**2) / (2 * (A_mod * eta_t)**(varphi_mod**2))
     term2 = gamma ** (varphi_mod**2 - 1)
     term3 = erfc((np.log((gamma / (A_mod * eta_t))) + mu) / (np.sqrt(2) * math.sqrt(sigma_R_squared)))
@@ -209,22 +195,6 @@ def beam_waist(h_s, H_g, theta_zen_rad, theta_d_half_rad):
 def satellite_ground_distance(h_s, H_g, theta_zen_rad):
     return (h_s - H_g) / math.cos(theta_zen_rad)
 
-#==================================================================#
-# fading_loss : PDF of beam jitter for γ
-# qber_loss   : Transmission efficiency Bit error rate with respect to γ
-# h_s         : Satellite's altitude (m)
-#==================================================================#
-# def qner_new_infinite(theta_zen_rad, H_atm, w_L, tau_zen, LoS):
-#     mu_x = 0
-#     mu_y = 0
-#     sigma_x = theta_d_half_rad /3 * LoS
-#     sigma_y = theta_d_half_rad /3 * LoS
-
-#     def integrand(gamma_mean):
-#         return fading_loss(gamma_mean, mu_x, mu_y, sigma_x, sigma_y, theta_zen_rad, H_atm, w_L, tau_zen) * qber_loss(gamma_mean, n_s)
-
-#     result, _ = quad(integrand, 0, 1, limit=100, epsabs=1e-9, epsrel=1e-9)
-#     return result
 
 def equivalent_beam_width_squared(a, w_L):
     # w_L: beam radius at receiver before aperture clipping
@@ -244,9 +214,13 @@ def qner_new_infinite(theta_zen_rad, H_atm, w_L, tau_zen, LoS):
 
     def integrand(eta):
         return fading_loss(eta, mu_x, mu_y, sigma_x, sigma_y, theta_zen_rad, H_atm, w_L, w_Leq, tau_zen) * qber_loss(eta, n_s)
+    
+    def integrand2(eta):
+        return fading_loss(eta, mu_x, mu_y, sigma_x, sigma_y, theta_zen_rad, H_atm, w_L, w_Leq, tau_zen)* parameter_q(eta, n_s)
 
     result, _ = quad(integrand, 0, np.inf, limit=100, epsabs=1e-9, epsrel=1e-9)
-    return result
+    result2, _ = quad(integrand2, 0, np.inf, limit=100, epsabs=1e-9, epsrel=1e-9)
+    return result, result2
 
 #==================================================================#
 #  Compute QBER estimation
@@ -257,6 +231,9 @@ def qber_loss(eta, n_s):
     qber = denominator/numerator
     return qber
 
+def parameter_q(eta, n_s):
+    param_q = (Y_0*(1+P_AP)) + (1-np.exp(-n_s*eta)) * (1+P_AP)
+    return param_q
 
 def weather_condition(tau_zen):
     if tau_zen == 0.91:
@@ -269,41 +246,56 @@ def weather_condition(tau_zen):
         return 'Poor visibility'
     else:
         return 'Unknown condition'
-    
+
 
 def main():
     tau_zen_list = [0.91, 0.85, 0.75, 0.53]
-    theta_zen_deg_list = np.linspace(-60, 60, 200)
-
+    theta_zen_deg_list = np.linspace(-60, 60, 100)
     plt.figure(figsize=(10, 6))
 
     for tau_zen in tau_zen_list:
-        qber_values = []
+        keyrate_values = []
+
+        # Get weather condition and H_atm from tau_zen
         weather_condition_str = weather_condition(tau_zen)
+        
         for theta_zen_deg in theta_zen_deg_list:
-            theta_zen_rad = math.radians(theta_zen_deg)
+            if theta_zen_deg < 0:
+                theta_zen_rad = np.radians(-theta_zen_deg)
+            else:
+                theta_zen_rad = np.radians(theta_zen_deg)
+            # print(theta_zen_deg)
             LoS = satellite_ground_distance(h_s, H_g, theta_zen_rad)
             waist = beam_waist(h_s, H_g, theta_zen_rad, theta_d_half_rad)
-            qber = qner_new_infinite(theta_zen_rad, H_atm, waist, tau_zen, LoS)
-            qber_values.append(qber*100)
+            qber, param_q = qner_new_infinite(theta_zen_rad, H_atm, waist, tau_zen, LoS)
+            # qber = qner_new_infinite(theta_zen_rad, H_atm, waist, tau_zen, LoS)
+            # print(qber)
+            print(f'qber: {qber}')
+           
+            # prob_error = qber_loss(insta_eta, n_s)
+            secret_keyrate = compute_secret_keyrate(qber, param_q, sifting_coefficient, p_estimation, kr_efficiency)
+            keyrate_values.append(secret_keyrate)
 
         label = weather_condition_str + f" (τ = {tau_zen})"
-        plt.plot(theta_zen_deg_list, qber_values, label=label)
+        plt.plot(theta_zen_deg_list, keyrate_values, label=label)
+        
 
-    # グラフ装飾
-    plt.xlabel(r"Zenith angle $\theta_{\mathrm{zen}}$ [deg]", fontsize=20)
-    plt.ylabel(r"QBER (Quantum Bit Error Rate) [%]", fontsize=20)
-    plt.title("QBER vs Zenith Angle for Various Weather Conditions", fontsize=20)
+    plt.xlabel("Zenith angle (degrees)", fontsize=20)
+    plt.ylabel("Secret key rate", fontsize=20)
+    plt.title(f"Secret Key Rate vs Zenith Angle (n_s = {n_s})", fontsize=20)
     plt.grid(True)
-    plt.legend(fontsize=12)
     plt.xticks(fontsize=20)
     plt.yticks(fontsize=20)
-    plt.tight_layout()
-
-    output_path = os.path.join(os.path.dirname(__file__), f'qber_vs_zenith_all_conditions{n_s}.png')
+    plt.legend()
+    ax = plt.gca() 
+    formatter = ScalarFormatter(useMathText=True)
+    formatter.set_powerlimits((-3, 3))  # 指数表示の範囲設定（例: 1e-3 〜 1e+3）
+    ax.yaxis.set_major_formatter(formatter)
+    output_path = os.path.join(os.path.dirname(__file__), f'secret_keyrate_vs_zenith_all_conditions_{n_s}.png')
     plt.savefig(output_path)
     print(f"✅ Saved as: {output_path}")
     plt.show()
+
 
 if __name__ == "__main__":
     main()
