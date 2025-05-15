@@ -6,7 +6,7 @@ from scipy.special import erf
 from scipy.stats import lognorm
 import matplotlib.pyplot as plt
 from matplotlib.ticker import ScalarFormatter
-
+from matplotlib.ticker import ScalarFormatter
 from scipy.integrate import quad
 from secretkeyrate import compute_secret_keyrate
 import os
@@ -60,6 +60,20 @@ theta_d_half_rad = theta_d_rad /2
 # v_wind: wind_speed
 #==================================================================#
 v_wind = 21 
+
+#==================================================================#
+# mu_x, mu_y: Mean values of pointing error in x and y directions (m)
+#==================================================================#
+# mu_x = 0
+# mu_y = 0
+
+#==================================================================#
+# angle_sigma_x, angle_sigma_y: Beam jitter standard deviations of the Gaussian-distibution jitters (rad)
+#==================================================================#
+# angle_sigma_x = theta_d_half_rad /2
+# angle_sigma_y = theta_d_half_rad /2
+# angle_sigma_x = theta_d_half_rad / 3
+# angle_sigma_y = theta_d_half_rad / 3
 
 #=======================================================#
 # QBER parameters
@@ -158,7 +172,7 @@ def rytov_variance(len_wave, theta_zen_rad, H_OGS, H_atm, Cn2_profile):
 
     return sigma_R_squared
 
-def cn2_profile(h, v_wind=21, Cn2_0=1e-13):
+def cn2_profile(h, v_wind=21, Cn2_0=1e-15):
     term1 = 0.00594 * (v_wind / 27)**2 * (1e-5 * h)**10 * np.exp(-h / 1000)
     term2 = 2.7e-16 * np.exp(-h / 1500)
     term3 = Cn2_0 * np.exp(-h / 100)
@@ -203,6 +217,7 @@ def equivalent_beam_width_squared(a, w_L):
     denominator = 2 * nu * math.exp(-nu**2)
     return w_L**2 * (numerator / denominator)
 
+
 def qner_new_infinite(theta_zen_rad, H_atm, w_L, tau_zen, LoS):
     mu_x = 0
     mu_y = 0
@@ -246,7 +261,7 @@ def weather_condition(tau_zen):
         return 'Poor visibility'
     else:
         return 'Unknown condition'
-
+    
 
 def main():
     tau_zen_list = [0.91, 0.85, 0.75, 0.53]
@@ -254,7 +269,7 @@ def main():
     plt.figure(figsize=(10, 6))
 
     for tau_zen in tau_zen_list:
-        keyrate_values = []
+        pulserate_values = []
 
         # Get weather condition and H_atm from tau_zen
         weather_condition_str = weather_condition(tau_zen)
@@ -269,20 +284,22 @@ def main():
             waist = beam_waist(h_s, H_g, theta_zen_rad, theta_d_half_rad)
             qber, param_q = qner_new_infinite(theta_zen_rad, H_atm, waist, tau_zen, LoS)
             # qber = qner_new_infinite(theta_zen_rad, H_atm, waist, tau_zen, LoS)
-            # print(qber)
-            print(f'qber: {qber}')
+            print(qber)
+            print(f'param_q: {param_q}')
            
             # prob_error = qber_loss(insta_eta, n_s)
             secret_keyrate = compute_secret_keyrate(qber, param_q, sifting_coefficient, p_estimation, kr_efficiency)
-            keyrate_values.append(secret_keyrate)
+            pulserate = secret_keyrate / 1e-4
+            pulserate_values.append(pulserate)
 
         label = weather_condition_str + f" (τ = {tau_zen})"
-        plt.plot(theta_zen_deg_list, keyrate_values, label=label)
+        plt.plot(theta_zen_deg_list, pulserate_values, label=label)
         
 
-    plt.xlabel("Zenith angle (degree)", fontsize=20)
-    plt.ylabel("Secret key rate (bit/second)", fontsize=20)
-    plt.title(f"Secret Key Rate vs Zenith Angle (n_s = {n_s})", fontsize=20)
+    plt.xlabel("Zenith angle (degrees)", fontsize=20)
+    plt.ylabel("Secret Keyrate(bit/pulse)", fontsize=20)
+    plt.title("Secret Keyrate vs Zenith Angle" + f" $(n_s = {n_s})$", fontsize=20)
+
     plt.grid(True)
     plt.xticks(fontsize=20)
     plt.yticks(fontsize=20)
@@ -291,10 +308,11 @@ def main():
     formatter = ScalarFormatter(useMathText=True)
     formatter.set_powerlimits((-3, 3))  # 指数表示の範囲設定（例: 1e-3 〜 1e+3）
     ax.yaxis.set_major_formatter(formatter)
-    output_path = os.path.join(os.path.dirname(__file__), f'skr_vs_zenith_all_conditions_{n_s}.png')
+    output_path = os.path.join(os.path.dirname(__file__), f'skr_per_pulse_vs_zenith_all_conditions_{n_s}.png')
     plt.savefig(output_path)
     print(f"✅ Saved as: {output_path}")
     plt.show()
+
 
 
 if __name__ == "__main__":
