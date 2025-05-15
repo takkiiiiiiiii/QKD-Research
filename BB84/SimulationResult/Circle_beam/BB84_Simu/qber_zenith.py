@@ -22,7 +22,7 @@ a = 0.75
 #==================================================================#
 # n_s : average number of photon
 #==================================================================#
-n_s = 0.1
+# n_s = 0.1
 
 #==================================================================#
 # len_wave : Optical wavelength (μm)
@@ -228,7 +228,7 @@ def equivalent_beam_width_squared(a, w_L):
     denominator = 2 * nu * math.exp(-nu**2)
     return w_L**2 * (numerator / denominator)
 
-def qner_new_infinite(theta_zen_rad, H_atm, w_L, tau_zen, LoS):
+def qner_new_infinite(theta_zen_rad, H_atm, w_L, tau_zen, LoS, n_s):
     mu_x = 0
     mu_y = 0
     sigma_x = theta_d_half_rad /5 * LoS
