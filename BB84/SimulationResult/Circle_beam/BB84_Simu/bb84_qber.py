@@ -5,7 +5,7 @@ from qiskit_aer.noise import (NoiseModel, pauli_error)
 import time
 import socket, math
 from ave_qber_zenith import *
-from ave_qber_zenith2 import *
+from SimulationResult.Circle_beam.BB84_Simu.ave_qber_zenith import *
 import numpy as np
 import os, sys
 import matplotlib.pyplot as plt
@@ -271,7 +271,7 @@ def calculate_pulse_rate(n_s, raw_key_rate=6383.91):
 
 
 def main():
-    num_samples = 1000 #100000
+    num_samples = 100 #100000
     total_qubit = int(1000)
     # noise_model = apply_noise_model(0.5)
     # print(noise_model)

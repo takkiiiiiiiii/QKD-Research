@@ -136,6 +136,13 @@ def sigma_to_variance(sigma, w_Leq):
     return variance
 
 
+#=======================================================#
+# Beam waist function
+#=======================================================#
+def beam_waist(h_s, H_g, theta_zen_rad, theta_d_half_rad):
+    LoS = satellite_ground_distance(h_s, H_g, theta_zen_rad)
+    waist = LoS * theta_d_half_rad
+    return waist
 
 def to_decimal_string(x, precision=100):
     if x == 0:
@@ -148,12 +155,12 @@ def main():
     print(LoS)
     mu_y = 0
     mu_x = 0
-    angle_sigma_x = 3e-6
-    angle_sigma_y = 3e-6
+    angle_sigma_x = 5e-6
+    angle_sigma_y = 5e-6
     sigma_x = angle_sigma_x * LoS
     sigma_y = angle_sigma_y * LoS
 
-    w_L = compute_w_L(lambda_, theta_d_half_rad, LoS, H_atm, H_g, theta_zen_rad, Cn2_profile)
+    w_L = beam_waist(h_s, H_g, theta_zen_rad, theta_d_half_rad)
 
     sigma_mod = compute_sigma_mod(mu_x, mu_y, sigma_x, sigma_y)
 
