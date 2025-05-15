@@ -286,7 +286,7 @@ def transmissivity_etap(theta_zen_rad, r):
     # print(fr'w_L: {w_L}')
     # w_Leq_squared = equivalent_beam_width_squared(a, w_L)
     nu = (math.sqrt(math.pi) * a) / (math.sqrt(2) * w_L)
-    print(fr'nu: {nu}')
+    # print(fr'nu: {nu}')
     A0 = erf(nu)**2
     # print(f'A0: {A0}')
     eta_p = A0 * np.exp(-(2*r**2)/(w_L))

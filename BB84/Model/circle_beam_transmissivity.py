@@ -114,9 +114,9 @@ def to_decimal_string(x, precision=70):
 #=======================================================#
 # Beam waist function
 #=======================================================#
-def beam_waist(h_s, H_g, theta_zen_rad, theta_d_rad):
-    L_a = satellite_ground_distance(h_s, H_g, theta_zen_rad)
-    waist = L_a * theta_d_rad
+def beam_waist(h_s, H_g, theta_zen_rad, theta_d_half_rad):
+    LoS = satellite_ground_distance(h_s, H_g, theta_zen_rad)
+    waist = LoS * theta_d_half_rad
     return waist
 
 #=======================================================#

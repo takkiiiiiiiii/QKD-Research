@@ -271,14 +271,14 @@ def calculate_pulse_rate(n_s, raw_key_rate=6383.91):
 
 
 def main():
-    num_samples = 100000 #100000
-    total_qubit = int(10000)
+    num_samples = 1000 #100000
+    total_qubit = int(1000)
     # noise_model = apply_noise_model(0.5)
     # print(noise_model)
     # tau_zen_list = [0.91, 0.85, 0,75, 0.53]
-    tau_zen_list = [0.91, 0.85, 0,75, 0.53]
-    theta_zen_deg_list = np.linspace(-50, 50, 10)
-    num_qubits = 1000
+    tau_zen_list = [0.91]
+    theta_zen_deg_list = np.linspace(0, 0, 1)
+    num_qubits = 100
     num_running = total_qubit/num_qubits +1
     pulse_rate = calculate_pulse_rate(n_s)
     print(f'Pulse Rate: {pulse_rate} (pulse/sec)')
@@ -300,8 +300,8 @@ def main():
             # prob_error = qner_new_infinite(theta_zen_rad, H_atm, w_L, tau_zen)
             
             qber_samples = []
-            for _ in range(num_samples):
-                
+            for i in range(num_samples):
+                print(f'tau_zen:{tau_zen}, {i} times, theta_zen_deg: {theta_zen_deg}')
                 eta_ell = transmissivity_etal(tau_zen, theta_zen_rad)
                 I_a = compute_intensity_loss(sigma_R_squared, size=1)
                 r = compute_radial_displacement(mu_x, mu_y, angle_sigma_x, angle_sigma_y, LoS)
@@ -311,10 +311,10 @@ def main():
                 # print(eta_p)
                 # print(f'r: {r}')
                 insta_eta = eta_ell * I_a * eta_p
-                print(insta_eta)
+                # print(insta_eta)
 
                 prob_error = qber_loss(insta_eta, n_s)
-                print(prob_error)
+                # print(prob_error)
 
                 total_err_num = 0
                 total_sifted_bit_length = 0
@@ -327,8 +327,9 @@ def main():
                 qber = total_err_num / total_sifted_bit_length * 100 if len(part_ka) > 0 else 0
                 qber_samples.append(qber)
             avg_qber = sum(qber_samples) / len(qber_samples)
+            print(f'QBER: {qber} at {theta_zen_deg} deg',)
             qber_values.append(avg_qber)
-
+            
         label = f"{weather_condition_str} (τ = {tau_zen})"
         plt.plot(theta_zen_deg_list, qber_values, label=label)
 
