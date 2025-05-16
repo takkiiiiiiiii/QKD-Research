@@ -179,7 +179,7 @@ def cn2_profile(h, v_wind=21, Cn2_0=1e-13):
 
 
 # Calculate the fading loss value
-def fading_loss(gamma, mu_x, mu_y, sigma_x, sigma_y, theta_zen_rad, H_atm, w_L,w_Leq, tau_zen):
+def fading_loss(eta, mu_x, mu_y, sigma_x, sigma_y, theta_zen_rad, H_atm, w_L,w_Leq, tau_zen):
     eta_t = transmissivity_etal(tau_zen, theta_zen_rad)
     sigma_R_squared = rytov_variance(lambda_, theta_zen_rad, H_g, H_atm, cn2_profile)
     sigma_mod = approximate_jitter_variance(mu_x, mu_y, sigma_x, sigma_y)
@@ -187,8 +187,8 @@ def fading_loss(gamma, mu_x, mu_y, sigma_x, sigma_y, theta_zen_rad, H_atm, w_L,w
     A_mod = mod_jitter(mu_x, mu_y, sigma_x, sigma_y, w_L, w_Leq)
     mu = sigma_R_squared/2 * (1+(2*varphi_mod**2))
     term1 = (varphi_mod**2) / (2 * (A_mod * eta_t)**(varphi_mod**2))
-    term2 = gamma ** (varphi_mod**2 - 1)
-    term3 = erfc((np.log((gamma / (A_mod * eta_t))) + mu) / (np.sqrt(2) * math.sqrt(sigma_R_squared)))
+    term2 = eta ** (varphi_mod**2 - 1)
+    term3 = erfc((np.log((eta / (A_mod * eta_t))) + mu) / (np.sqrt(2) * math.sqrt(sigma_R_squared)))
     term4 = np.exp(((sigma_R_squared/2) * varphi_mod**2 * (1 + varphi_mod**2)))
     eta_f = term1 * term2 * term3 * term4
     return eta_f

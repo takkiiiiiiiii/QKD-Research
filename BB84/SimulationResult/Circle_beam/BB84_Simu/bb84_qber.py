@@ -111,7 +111,7 @@ user0 = User("Alice", None, None, None)
 user1 = User("Bob", None, None, None)
 
 
-def generate_Siftedkey(user0, user1, num_qubits, ave_qber):
+def generate_Siftedkey(user0, user1, num_qubits, noise_prob):
     start = time.time()
     alice_bits = qrng(num_qubits)
     alice_basis = qrng(num_qubits)
@@ -128,8 +128,8 @@ def generate_Siftedkey(user0, user1, num_qubits, ave_qber):
     ae_basis, ae_match = check_bases(alice_basis, eve_basis)
 
     # Apply the quantum error chanel
-    if ave_qber>0:
-        noise_model = apply_noise_model(ave_qber)
+    if noise_prob>0:
+        noise_model = apply_noise_model(noise_prob)
 
     # Bob measures Alice's qubit
     qc, bob_bits = bob_measurement(qc, bob_basis, noise_model)
@@ -269,73 +269,203 @@ def calculate_pulse_rate(n_s, raw_key_rate=6383.91):
     return raw_key_rate / n_s
 
 
+# def main():
+#     num_samples = 100 #100000
+#     total_qubit = int(1000)
+#     tau_zen_list = [0.91, 0.85, 0.75, 0.53]
+#     n_s_list = [0.1, 0.5, 0.8]
+#     theta_zen_deg_list = np.linspace(-60, 60, 20)
+#     num_qubits = 1000
+#     num_running = total_qubit/num_qubits
+#     for n_s in n_s_list:
+#         pulse_rate = calculate_pulse_rate(n_s)
+#         # print(f'Pulse Rate: {pulse_rate} (pulse/sec)')
+#         # print(f'{n_s} (photon/pulse)')
+#         # qber_values = []
+#         plt.figure() 
+#         for tau_zen in tau_zen_list:
+#             qber_values = []
+
+#             # print(tau_zen)
+#             # Get weather condition and H_atm from tau_zen
+#             weather_condition_str = weather_condition(tau_zen)
+
+#             for theta_zen_deg in theta_zen_deg_list:
+#                 if theta_zen_deg < 0:
+#                     theta_zen_rad = math.radians(-theta_zen_deg)
+#                     # print(f'zenith angle(rad): {theta_zen_rad}')
+#                 else:    
+#                     theta_zen_rad = math.radians(theta_zen_deg)
+#                 sigma_R_squared = rytov_variance(lambda_, theta_zen_rad, H_g, H_atm, Cn2_profile)
+#                 LoS = satellite_ground_distance(h_s, H_g, theta_zen_rad)
+                
+#                 qber_samples = []
+#                 for i in range(num_samples):
+#                     print(f'n_s:{n_s}, tau_zen:{tau_zen}, {i} times, theta_zen_deg: {theta_zen_deg}')
+#                     eta_ell = transmissivity_etal(tau_zen, theta_zen_rad)
+#                     # print(eta_ell)
+#                     I_a = compute_intensity_loss(sigma_R_squared, size=1)
+#                     r = compute_radial_displacement(mu_x, mu_y, angle_sigma_x, angle_sigma_y, LoS)
+#                     eta_p = transmissivity_etap(theta_zen_rad, r)
+#                     insta_eta = eta_ell * I_a * eta_p
+#                     prob_error = qber_loss(insta_eta, n_s)
+#                     total_err_num = 0
+#                     total_sifted_bit_length = 0
+#                     for _ in range(int(num_running)):
+#                         part_ka, part_kb, err_num = generate_Siftedkey(
+#                             user0, user1, num_qubits, prob_error[0]
+#                         )
+#                         total_err_num += err_num
+#                         total_sifted_bit_length += len(part_ka)    
+#                     qber = total_err_num / total_sifted_bit_length * 100 if len(part_ka) > 0 else 0
+#                     qber_samples.append(qber)
+#                 avg_qber = sum(qber_samples) / len(qber_samples)
+#                 # print(f'QBER: {qber} at {theta_zen_deg} deg',)
+#                 qber_values.append(avg_qber)
+                
+#             label = f"{weather_condition_str} (τ = {tau_zen})"
+#             plt.plot(theta_zen_deg_list, qber_values, label=label)
+
+#         plt.xlabel(r"Zenith angle $\theta_{\mathrm{zen}}$ [deg]", fontsize=20)
+#         plt.ylabel("QBER (%)", fontsize=20)
+#         # plt.title("QBER vs Zenith Angle under Different Weather Conditions", fontsize=20)
+#         plt.legend(fontsize=12)
+#         plt.xticks(fontsize=20)
+#         plt.yticks(fontsize=20)
+#         plt.grid(True)
+#         plt.tight_layout()
+#         output_path = os.path.join(os.path.dirname(__file__), f'bb84_qber_vs_zenith_all_conditions_{n_s}.png')
+#         plt.savefig(output_path)
+
+# def main():
+#     num_samples = 1000
+#     total_qubit = 1000
+#     tau_zen_list = [0.91, 0.85, 0.75, 0.53]
+#     n_s_list = [0.1, 0.5, 0.8]
+#     theta_zen_deg_list = np.linspace(-60, 60, 20)
+#     num_qubits = 1000
+#     num_running = total_qubit // num_qubits
+
+#     for n_s in n_s_list:
+#         plt.figure()
+#         for tau_zen in tau_zen_list:
+#             qber_values = []
+
+#             weather_condition_str = weather_condition(tau_zen)
+
+#             for theta_zen_deg in theta_zen_deg_list:
+#                 theta_zen_rad = math.radians(abs(theta_zen_deg))
+#                 sigma_R_squared = rytov_variance(lambda_, theta_zen_rad, H_g, H_atm, Cn2_profile)
+#                 LoS = satellite_ground_distance(h_s, H_g, theta_zen_rad)
+                
+#                 qber_samples = []
+
+#                 for i in range(num_samples):
+#                     print(f'n_s:{n_s}, tau_zen:{tau_zen}, sample:{i}, theta_zen_deg: {theta_zen_deg}')
+#                     eta_ell = transmissivity_etal(tau_zen, theta_zen_rad)
+#                     I_a = compute_intensity_loss(sigma_R_squared, size=1)
+#                     r = compute_radial_displacement(mu_x, mu_y, angle_sigma_x, angle_sigma_y, LoS)
+#                     eta_p = transmissivity_etap(theta_zen_rad, r)
+#                     insta_eta = eta_ell * I_a * eta_p
+#                     prob_error = qber_loss(insta_eta, n_s)
+#                     waist = beam_waist(h_s, H_g, theta_zen_rad, theta_d_half_rad)
+#                     qner_new_infinite(theta_zen_rad, H_atm, waist, tau_zen, LoS)
+#                     print(f'prob_error: {prob_error}')
+#                     total_err_num = 0
+#                     total_sifted_bit_length = 0
+
+#                     for _ in range(int(num_running)):
+#                         part_ka, part_kb, err_num = generate_Siftedkey(
+#                             user0, user1, num_qubits, noise_prob=prob_error[0]
+#                         )
+#                         total_err_num += err_num
+#                         total_sifted_bit_length += len(part_ka)
+
+#                     qber = (total_err_num / total_sifted_bit_length * 100) if total_sifted_bit_length > 0 else 0
+#                     qber_samples.append(qber)
+
+#                 avg_qber = sum(qber_samples) / len(qber_samples)
+#                 qber_values.append(avg_qber)
+
+#             label = f"{weather_condition_str} (τ = {tau_zen})"
+#             plt.plot(theta_zen_deg_list, qber_values, label=label)
+
+#         plt.xlabel(r"Zenith angle $\theta_{\mathrm{zen}}$ [deg]", fontsize=20)
+#         plt.ylabel("QBER (%)", fontsize=20)
+#         # plt.legend(fontsize=12)
+#         plt.xticks(fontsize=14)
+#         plt.yticks(fontsize=14)
+#         plt.grid(True)
+#         plt.tight_layout()
+
+#         output_path = os.path.join(os.path.dirname(__file__), f'bb84_qber_vs_zenith_all_conditions_{n_s}.png')
+#         plt.savefig(output_path)
+#         plt.close()
+
 def main():
-    num_samples = 500 #100000
-    total_qubit = int(1000)
-    tau_zen_list = [0.91, 0.85, 0,75, 0.53]
-    n_s_list = [0.1, 0.5, 0.8]
+    num_samples = 1000
+    total_qubit = 1000
+    tau_zen_list = [0.91, 0.85, 0.75, 0.53]
+    n_s_list = [0.5, 0.8]
     theta_zen_deg_list = np.linspace(-60, 60, 20)
     num_qubits = 1000
-    num_running = total_qubit/num_qubits
+    num_running = total_qubit // num_qubits
+
     for n_s in n_s_list:
-        pulse_rate = calculate_pulse_rate(n_s)
-        print(f'Pulse Rate: {pulse_rate} (pulse/sec)')
-        print(f'{n_s} (photon/pulse)')
+        plt.figure()
         for tau_zen in tau_zen_list:
             qber_values = []
-            print(tau_zen)
-            # Get weather condition and H_atm from tau_zen
+
             weather_condition_str = weather_condition(tau_zen)
 
             for theta_zen_deg in theta_zen_deg_list:
-                if theta_zen_deg < 0:
-                    theta_zen_rad = math.radians(-theta_zen_deg)
-                    print(f'zenith angle(rad): {theta_zen_rad}')
-                else:    
-                    theta_zen_rad = math.radians(theta_zen_deg)
+                theta_zen_rad = math.radians(abs(theta_zen_deg))
                 sigma_R_squared = rytov_variance(lambda_, theta_zen_rad, H_g, H_atm, Cn2_profile)
                 LoS = satellite_ground_distance(h_s, H_g, theta_zen_rad)
                 
                 qber_samples = []
+
                 for i in range(num_samples):
-                    print(f'tau_zen:{tau_zen}, {i} times, theta_zen_deg: {theta_zen_deg}')
-                    eta_ell = transmissivity_etal(tau_zen, theta_zen_rad)
-                    print(eta_ell)
-                    I_a = compute_intensity_loss(sigma_R_squared, size=1)
-                    r = compute_radial_displacement(mu_x, mu_y, angle_sigma_x, angle_sigma_y, LoS)
-                    eta_p = transmissivity_etap(theta_zen_rad, r)
-                    insta_eta = eta_ell * I_a * eta_p
-                    prob_error = qber_loss(insta_eta, n_s)
+                    print(f'n_s:{n_s}, tau_zen:{tau_zen}, sample:{i}, theta_zen_deg: {theta_zen_deg}')
+                    # eta_ell = transmissivity_etal(tau_zen, theta_zen_rad)
+                    # I_a = compute_intensity_loss(sigma_R_squared, size=1)
+                    # r = compute_radial_displacement(mu_x, mu_y, angle_sigma_x, angle_sigma_y, LoS)
+                    # eta_p = transmissivity_etap(theta_zen_rad, r)
+                    # insta_eta = eta_ell * I_a * eta_p
+                    # prob_error = qber_loss(insta_eta, n_s)
+                    w_L = beam_waist(h_s, H_g, theta_zen_rad, theta_d_half_rad)
+                    prob_error = qner_new_infinite(theta_zen_rad, H_atm, w_L, tau_zen, LoS, n_s)
+                    print(f'prob_error: {prob_error}')
                     total_err_num = 0
                     total_sifted_bit_length = 0
+
                     for _ in range(int(num_running)):
                         part_ka, part_kb, err_num = generate_Siftedkey(
-                            user0, user1, num_qubits, prob_error[0]
+                            user0, user1, num_qubits, noise_prob=prob_error
                         )
                         total_err_num += err_num
-                        total_sifted_bit_length += len(part_ka)    
-                    qber = total_err_num / total_sifted_bit_length * 100 if len(part_ka) > 0 else 0
+                        total_sifted_bit_length += len(part_ka)
+
+                    qber = (total_err_num / total_sifted_bit_length * 100) if total_sifted_bit_length > 0 else 0
                     qber_samples.append(qber)
+
                 avg_qber = sum(qber_samples) / len(qber_samples)
-                print(f'QBER: {qber} at {theta_zen_deg} deg',)
                 qber_values.append(avg_qber)
-                
+
             label = f"{weather_condition_str} (τ = {tau_zen})"
             plt.plot(theta_zen_deg_list, qber_values, label=label)
 
         plt.xlabel(r"Zenith angle $\theta_{\mathrm{zen}}$ [deg]", fontsize=20)
         plt.ylabel("QBER (%)", fontsize=20)
-        # plt.title("QBER vs Zenith Angle under Different Weather Conditions", fontsize=20)
-        plt.legend(fontsize=12)
-        plt.xticks(fontsize=20)
-        plt.yticks(fontsize=20)
+        # plt.legend(fontsize=12)
+        plt.xticks(fontsize=14)
+        plt.yticks(fontsize=14)
         plt.grid(True)
         plt.tight_layout()
-        output_path = os.path.join(os.path.dirname(__file__), f'bb84_qber_vs_zenith_all_conditions_{n_s}.png')
-        plt.savefig(output_path)
-    plt.show()
 
-    
+        output_path = os.path.join(os.path.dirname(__file__), f'bb84_qber_vs_zenith_all_conditions_new_{n_s}.png')
+        plt.savefig(output_path)
+        plt.close()
     
     
 
