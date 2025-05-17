@@ -190,7 +190,7 @@ def main():
     max_raw_keyrate = 0
     raw_keyrates = []
     best_num_qubits = None
-    num_qubits_list = list(range(100, 500, 50))
+    num_qubits_list = list(range(50, 450, 50))
 
     count_per_qubit = 100  # 各qubit数での実行回数
 
@@ -222,11 +222,11 @@ def main():
     plt.yticks(fontsize=20)
     plt.grid(True, linestyle='--', alpha=0.6)
     plt.tight_layout()
-    output_path = os.path.join(os.path.dirname(__file__), "raw_key_rate.png")
+    output_path = os.path.join(os.path.dirname(__file__), "raw_key_rate_mac.png")
     plt.savefig(output_path)
     print(f"✅ Saved as: {output_path}")
 
-    plt.show()
+    # plt.show()
 
 if __name__ == '__main__':
     main()
