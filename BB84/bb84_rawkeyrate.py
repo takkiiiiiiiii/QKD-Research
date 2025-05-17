@@ -190,7 +190,7 @@ def main():
     max_raw_keyrate = 0
     raw_keyrates = []
     best_num_qubits = None
-    num_qubits_list = list(range(100, 1200, 100))
+    num_qubits_list = list(range(100, 500, 50))
 
     count_per_qubit = 100  # 各qubit数での実行回数
 
