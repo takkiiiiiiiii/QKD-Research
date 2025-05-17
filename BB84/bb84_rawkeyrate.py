@@ -233,16 +233,15 @@ if __name__ == '__main__':
 
 # Note
 #=============Raw kew rate on Linux==================#
-# No. of Qubits: 100: 4446.81 Qubit/sec (avg over 100)
-# No. of Qubits: 150: 4681.16 Qubit/sec (avg over 100)
-# No. of Qubits: 200: 4827.89 Qubit/sec (avg over 100)
-# No. of Qubits: 250: 4950.10 Qubit/sec (avg over 100)
-# No. of Qubits: 300: 5174.45 Qubit/sec (avg over 100)
-# No. of Qubits: 350: 5035.87 Qubit/sec (avg over 100)
-# No. of Qubits: 400: 4991.69 Qubit/sec (avg over 100)
-# No. of Qubits: 450: 4733.17 Qubit/sec (avg over 100)
+# No. of Qubits: 50: 4100.70 Qubit/sec (avg over 100)
+# No. of Qubits: 100: 4784.82 Qubit/sec (avg over 100)
+# No. of Qubits: 150: 5127.48 Qubit/sec (avg over 100)
+# No. of Qubits: 200: 5267.55 Qubit/sec (avg over 100)
+# No. of Qubits: 250: 5307.12 Qubit/sec (avg over 100)
+# No. of Qubits: 300: 5067.82 Qubit/sec (avg over 100)
+# No. of Qubits: 350: 4901.75 Qubit/sec (avg over 100)
+# No. of Qubits: 400: 4860.84 Qubit/sec (avg over 100)
 
-# Max Avg Raw key rate: 5174.45 Qubit/sec at 300 qubits
-
+# Max Avg Raw key rate: 5307.12 Qubit/sec at 250 qubits
 
 #=============Raw kew rate on Mac==================#
