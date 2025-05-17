@@ -403,7 +403,7 @@ def calculate_pulse_rate(n_s, raw_key_rate=6383.91):
 #         plt.close()
 
 def main():
-    num_samples = 1000
+    num_samples = 200
     total_qubit = 1000
     tau_zen_list = [0.91, 0.85, 0.75, 0.53]
     n_s_list = [0.5, 0.8]
@@ -424,7 +424,8 @@ def main():
                 LoS = satellite_ground_distance(h_s, H_g, theta_zen_rad)
                 
                 qber_samples = []
-
+                w_L = beam_waist(h_s, H_g, theta_zen_rad, theta_d_half_rad)
+                prob_error = qner_new_infinite(theta_zen_rad, H_atm, w_L, tau_zen, LoS, n_s)
                 for i in range(num_samples):
                     print(f'n_s:{n_s}, tau_zen:{tau_zen}, sample:{i}, theta_zen_deg: {theta_zen_deg}')
                     # eta_ell = transmissivity_etal(tau_zen, theta_zen_rad)
@@ -433,19 +434,15 @@ def main():
                     # eta_p = transmissivity_etap(theta_zen_rad, r)
                     # insta_eta = eta_ell * I_a * eta_p
                     # prob_error = qber_loss(insta_eta, n_s)
-                    w_L = beam_waist(h_s, H_g, theta_zen_rad, theta_d_half_rad)
-                    prob_error = qner_new_infinite(theta_zen_rad, H_atm, w_L, tau_zen, LoS, n_s)
-                    print(f'prob_error: {prob_error}')
+                    # print(f'prob_error: {prob_error}')
                     total_err_num = 0
                     total_sifted_bit_length = 0
-
                     for _ in range(int(num_running)):
                         part_ka, part_kb, err_num = generate_Siftedkey(
                             user0, user1, num_qubits, noise_prob=prob_error
                         )
                         total_err_num += err_num
                         total_sifted_bit_length += len(part_ka)
-
                     qber = (total_err_num / total_sifted_bit_length * 100) if total_sifted_bit_length > 0 else 0
                     qber_samples.append(qber)
 
