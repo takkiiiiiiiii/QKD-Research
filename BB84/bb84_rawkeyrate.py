@@ -263,3 +263,14 @@ if __name__ == '__main__':
 # Max Avg Raw key rate: 5307.12 Qubit/sec at 250 qubits
 
 #=============Raw kew rate on Mac==================#
+# No. of Qubits: 50: 4185.15 Qubit/sec (avg over 100)
+# No. of Qubits: 100: 4715.18 Qubit/sec (avg over 100)
+# No. of Qubits: 150: 4866.37 Qubit/sec (avg over 100)
+# No. of Qubits: 200: 4963.07 Qubit/sec (avg over 100)
+# No. of Qubits: 250: 4977.82 Qubit/sec (avg over 100)
+# No. of Qubits: 300: 4940.16 Qubit/sec (avg over 100)
+# No. of Qubits: 350: 4838.11 Qubit/sec (avg over 100)
+# No. of Qubits: 400: 4585.40 Qubit/sec (avg over 100)
+
+# Max Avg Raw key rate: 4977.82 Qubit/sec at 250 qubits
+# ✅ Saved as: /Users/yudai/dev/uni_study/master/QKD-Research/BB84/raw_key_rate_mac.png
