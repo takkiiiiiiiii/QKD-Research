@@ -189,21 +189,27 @@ def check_bits(b1, b2, bck):
 def main():
     max_raw_keyrate = 0
     raw_keyrates = []
+    runtimes = []
     best_num_qubits = None
-    num_qubits_list = list(range(50, 450, 50))
+    num_qubits_list = [1] + list(range(1050, 1150, 50))
+
 
     count_per_qubit = 100  # 各qubit数での実行回数
 
     for num_qubits in num_qubits_list:
         total_keyrate = 0
+        total_runtime = 0
         for _ in range(count_per_qubit):
             part_ka, part_kb, runtime = generate_Siftedkey(user0, user1, num_qubits)
             raw_keyrate = len(part_ka) / runtime
             total_keyrate += raw_keyrate
+            total_runtime += runtime
 
         avg_keyrate = total_keyrate / count_per_qubit
+        avg_runtime = total_runtime / count_per_qubit
         raw_keyrates.append(avg_keyrate)
-        print(f'No. of Qubits: {num_qubits:2d}: {avg_keyrate:.2f} Qubit/sec (avg over {count_per_qubit})')
+        runtimes.append(avg_runtime)
+        print(f'No. of Qubits: {num_qubits:2d}: {avg_keyrate:.2f} Qubit/sec, Avg Runtime: {avg_runtime:.5f} sec (avg over {count_per_qubit})')
         
         if avg_keyrate > max_raw_keyrate:
             max_raw_keyrate = avg_keyrate
@@ -211,18 +217,31 @@ def main():
 
     print(f'\nMax Avg Raw key rate: {max_raw_keyrate:.2f} Qubit/sec at {best_num_qubits} qubits')
 
-    # グラフ作成
-    plt.figure(figsize=(10, 6))
-    plt.plot(num_qubits_list, raw_keyrates, marker='o', linestyle='-')
-    plt.title("Raw Key Rate vs Number of Qubits", fontsize=20)
-    plt.xlabel("Number of Qubits", fontsize=20)
-    plt.ylabel("Raw Key Rate (Qubit/sec)", fontsize=20)
-    # plt.legend(fontsize=12)
-    plt.xticks(fontsize=20)
-    plt.yticks(fontsize=20)
-    plt.grid(True, linestyle='--', alpha=0.6)
-    plt.tight_layout()
-    output_path = os.path.join(os.path.dirname(__file__), "raw_key_rate_mac.png")
+    # グラフ作成（2軸）
+    fig, ax1 = plt.subplots(figsize=(10, 6))
+    # xticks = [1] + list(range(50, 100 + 1, 50))
+    color1 = 'tab:blue'
+    ax1.set_xlabel("Number of Qubits", fontsize=16)
+    ax1.set_ylabel("Raw Key Rate (Qubit/sec)", color=color1, fontsize=16)
+    ax1.plot(num_qubits_list, raw_keyrates, marker='o', linestyle='-', color=color1, label='Raw Key Rate')
+    ax1.tick_params(axis='y', labelcolor=color1)
+    xticks = list(range(0, 1000, 50))
+    ax1.set_xticks(xticks)
+    ax1.tick_params(axis='x', labelsize=14)
+    ax1.tick_params(axis='y', labelsize=14)
+    ax1.grid(True, linestyle='--', alpha=0.6)
+    
+
+    ax2 = ax1.twinx()  # 2つ目のy軸
+    color2 = 'tab:red'
+    ax2.set_ylabel("Runtime (sec)", color=color2, fontsize=16)
+    ax2.plot(num_qubits_list, runtimes, marker='s', linestyle='--', color=color2, label='Runtime')
+    ax2.tick_params(axis='y', labelcolor=color2)
+    ax2.tick_params(axis='y', labelsize=14)
+
+    # fig.suptitle("Raw Key Rate & Runtime vs Number of Qubits", fontsize=20)
+    fig.tight_layout()
+    output_path = os.path.join(os.path.dirname(__file__), "raw_key_rate_runtime.png")
     plt.savefig(output_path)
     print(f"✅ Saved as: {output_path}")
 
@@ -230,7 +249,6 @@ def main():
 
 if __name__ == '__main__':
     main()
-
 # Note
 #=============Raw kew rate on Linux==================#
 # No. of Qubits: 50: 4100.70 Qubit/sec (avg over 100)
