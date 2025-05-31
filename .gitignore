@@ -1,3 +1,4 @@
+.DS_Store
 **/__pycache__/
 BB84/Simulation/__pycache__/*
 BB84/Model/__pycache__/*
