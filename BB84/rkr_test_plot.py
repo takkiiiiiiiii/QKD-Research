@@ -1,5 +1,7 @@
 import matplotlib.pyplot as plt
+import matplotlib.patches as patches
 import os
+import numpy as np
 
 # データ
 num_qubits_list = [
@@ -31,6 +33,8 @@ runtimes = [
     0.72907, 0.77622, 0.84867, 0.89120, 0.93946, 0.92744, 0.98032, 1.16255, 1.19258,
     1.24516, 1.30361, 1.36753, 1.41974, 1.49533, 1.56988, 1.77907, 1.87501
 ]
+runtimes_ms = [t * 1000 for t in runtimes]
+
 
 # 最大 Raw Key Rate を検出
 max_keyrate = max(raw_keyrates)
@@ -42,35 +46,67 @@ fig, ax1 = plt.subplots(figsize=(14, 8))
 
 # 左軸: Raw Key Rate
 color1 = 'tab:blue'
-ax1.set_xlabel("Number of Qubits", fontsize=20)
-ax1.set_ylabel("Raw Key Rate (Qubit/sec)", color=color1, fontsize=20)
-ax1.plot(num_qubits_list, raw_keyrates, marker='o', linestyle='-', color=color1, label='Raw Key Rate')
-ax1.tick_params(axis='y', labelcolor=color1, labelsize=14)
-ax1.tick_params(axis='x', labelsize=14)
+ax1.set_xlabel("Generated Qubits from IQX Simulator per execution", fontsize=30)
+ax1.set_ylabel("Raw Key Rate (Qubit/sec)", color=color1, fontsize=30)
+
+ax1.plot(num_qubits_list, raw_keyrates, marker='o', linestyle='-', color=color1, linewidth=4.5)
+
+ax1.tick_params(axis='y', labelcolor=color1, labelsize=29)
+ax1.tick_params(axis='x', labelsize=30)
 ax1.grid(True, linestyle='--', alpha=0.6)
+ax1.set_xticks(range(0, 2001, 250))
 
-# x軸目盛を100ずつに設定
-ax1.set_xticks(range(0, 3100, 200))
+ax1.set_xlim(0, 2000)
 
-# 最大点を表示＋縦線
-ax1.plot(max_qubit, max_keyrate, 'ro', label='Max Raw Key Rate')
-ax1.annotate(f"Max: {max_keyrate:.2f} Qubit/second\nat {max_qubit} qubits",
-             xy=(max_qubit, max_keyrate),
-             xytext=(max_qubit + 150, max_keyrate - 800),
-            #  arrowprops=dict(facecolor='red', arrowstyle='->'),
-             fontsize=20, color='red')
-ax1.axvline(x=max_qubit, color='red', linestyle=':', linewidth=1.8)
+# ax1.axvline(
+#     x=max_qubit,
+#     color='purple',
+#     linestyle='--',
+#     linewidth=3.5,
+# )
+
+ax1.annotate(
+    'Peak at 250 Qubits',
+    xy=(max_qubit, max_keyrate),                  
+    xytext=(500, 5000),    # 注釈テキストの位置
+    arrowprops=dict(arrowstyle='->', color='black', lw=3.5),
+    fontsize=25,
+    color='black'
+)
+
+# 小さな横型楕円を追加（matplotlib.patches.Ellipseを使用）
+# ellipse = patches.Ellipse((1500, 2500), width=200, height=200, edgecolor='black', facecolor='none', lw=1)
+# ax1.add_patch(ellipse)
+# arrow_target_x = 1500 + 100 * np.cos(np.pi / 4)  # width方向の半径 * cos(45°)
+# arrow_target_y = 2500 + 100 * np.sin(np.pi / 4)  # height方向の半径 * sin(45°)
+
+# 矢印とラベルの追加
+# ax1.annotate(
+#     'hybrid',
+#     xy=(arrow_target_x, arrow_target_y),
+#     xytext=(1650, 2850),  # ラベル位置
+#     arrowprops=dict(arrowstyle='<-', color='black', lw=2),
+#     fontsize=22,
+#     color='black'
+# )
+
+# 凡例表示
+# ax1.legend(fontsize=25)
 
 # 右軸: Runtime
 ax2 = ax1.twinx()
 color2 = 'tab:red'
-ax2.set_ylabel("Runtime (sec)", color=color2, fontsize=20)
-ax2.plot(num_qubits_list, runtimes, marker='s', linestyle='--', color=color2, label='Runtime')
-ax2.tick_params(axis='y', labelcolor=color2, labelsize=14)
-
+ax2.set_ylabel("Execution Time (ms)", color=color2, fontsize=30)
+ax2.plot(num_qubits_list, runtimes_ms, marker='s', linestyle='--', color=color2, label='Execution Time', linewidth=4.0)
+ax2.tick_params(axis='y', labelcolor=color2, labelsize=30)
+# y軸範囲と目盛り（msで指定）
+ax2.set_ylim(0, 650)  # 0～150ms
+yticks = np.arange(100, 651, 100)  # 30ms刻み
+ax2.set_yticks(yticks)
 # タイトル
 # fig.suptitle("Raw Key Rate & Runtime vs Number of Qubits", fontsize=22)
 fig.tight_layout()
-output_path = os.path.join(os.path.dirname(__file__), "raw_key_rate_runtime.png")
-plt.savefig(output_path)
-print(f"✅ Saved as: {output_path}")
+# output_path = os.path.join(os.path.dirname(__file__), "raw_key_rate_runtime.pdf")
+# plt.savefig(output_path, format='pdf')
+# print(f"✅ Saved as: {output_path}")
+plt.savefig('raw_key_rate_runtime.pdf', format='pdf', bbox_inches="tight")
