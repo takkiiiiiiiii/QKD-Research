@@ -143,21 +143,6 @@ def apply_noise_model(p_meas):
     return noise_model
 
 
-# def bob_measurement(qc, bob_basis, noise_model):
-#     for i in range(len(bob_basis)):
-#         if bob_basis[i] == '1':  # Diagonal basis
-#             qc.h(i)
-
-#     qc.measure(range(len(bob_basis)), range(len(bob_basis)))
-#     result = execute(qc, backend, shots=1, noise_model=noise_model).result()
-#     counts = result.get_counts(0)
-#     max_key = max(counts, key=counts.get)
-#     bits = ''.join(reversed(max_key))
-
-#     qc.barrier()
-#     return qc, bits
-
-
 def bob_measurement(qc, bob_basis, noise_model):
     for i in range(len(bob_basis)):
         if bob_basis[i] == '1':  # Diagonal basis
